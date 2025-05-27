@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import "tailwindcss";
+@tailwind utilities;
+
+:root {
+  --brand-header-bg: #007AFF;      /* Azul Vivo para o Header */
+  --brand-footer-bg: #2C3E50;      /* Azul Escuro/Petróleo para o Footer */
+  --brand-text-header: #FFFFFF; /* Texto Branco para o Header */
+  --brand-text-footer: #CED4DA; /* Texto Cinza Claro para o Footer */
+  --brand-text-footer-hover: #FFFFFF;
+  --brand-background-page: #F7F9FA;  /* Cinza Muito Claro para o Fundo da Página */
+  --brand-card-background: #FFFFFF;      /* Branco para Cards */
+  --brand-text-primary: #212529; /* Cinza Escuro para Texto Principal */
+  --brand-text-secondary: #6C757D;/* Cinza Médio para Texto Secundário */
+  
+  --alert-red: #E74C3C;
+  --alert-orange: #F39C12;
+  --alert-yellow: #F1C40F;
+  --success-green: #2ECC71;
+
+  --shadow-subtle: 0px 4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+body {
+  background-color: var(--brand-background-page);
+  color: var(--brand-text-primary);
+}
