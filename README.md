@@ -1,11 +1,11 @@
-# Spectrum Aware 🚨🏙️
+# Echo Report 🚨🏙️
 
-Bem-vindo ao Spectrum Aware! Este é um projeto Next.js que visa desenvolver uma plataforma colaborativa para o monitoramento e emissão de alertas sobre riscos urbanos causados por eventos climáticos extremos, como alagamentos, quedas de árvores e ondas de calor.
+Bem-vindo ao Echo Report! Este é um projeto Next.js que visa desenvolver uma plataforma colaborativa para o monitoramento e emissão de alertas sobre riscos urbanos causados por eventos climáticos extremos, como alagamentos, quedas de árvores e ondas de calor.
 
 A plataforma permite que cidadãos reportem ocorrências, visualizem um mapa interativo com os riscos atuais e recebam alertas relevantes para suas áreas, contribuindo para uma comunidade mais informada, preparada e resiliente.
 
 **Principais Funcionalidades:**
-* **Reporte Comunitário:** Usuários podem submeter informações sobre eventos e riscos observados.
+* **Report Comunitário:** Usuários podem submeter informações sobre eventos e riscos observados.
 * **Mapa Interativo:** Visualização geográfica de ocorrências e alertas.
 * **Sistema de Alertas:** Notificações sobre riscos iminentes ou em andamento.
 * **Hub de Informações:** Acesso a recomendações e dados relevantes.
