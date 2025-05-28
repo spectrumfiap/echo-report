@@ -12,7 +12,7 @@ const kanit = Kanit({
 });
 
 export const metadata: Metadata = {
-  title: 'Watch Tower - Monitoramento e Alerta Urbano',
+  title: 'Echo Report - Monitoramento e Alerta Urbano',
   description: 'Plataforma colaborativa para monitoramento e alerta de riscos urbanos.',
 };
 
