@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Kanit } from 'next/font/google';
+import Script from 'next/script';
 import './styles/globals.css';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -25,6 +26,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const chatbaseChatbotId = "yJNzeKJmvkX0YlGC8HR__";
+
   return (
     <html lang="pt-BR">
       <body
@@ -37,6 +40,22 @@ export default function RootLayout({
           </main>
           <Footer />
         </AuthProvider>
+
+        {/* Script de configuração do Chatbase */}
+        <Script id="chatbase-config" strategy="lazyOnload">
+          {`
+            window.chatbaseConfig = {
+              chatbotId: "${chatbaseChatbotId}"
+            }
+          `}
+        </Script>
+        {/* Script principal de carregamento do Chatbase */}
+        <Script 
+          src="https://www.chatbase.co/embed.min.js" 
+          id={chatbaseChatbotId} 
+          strategy="lazyOnload"
+          defer
+        />
       </body>
     </html>
   );
