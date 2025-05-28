@@ -5,7 +5,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-// Importando os ícones do Heroicons (versão Outline)
+// Importando os ícones do Heroicons
 import {
   WifiIcon, // Para Monitoramento
   BellAlertIcon, // Para Alertas
@@ -22,7 +22,7 @@ import {
 export default function HomePage() {
   const safetyTipsData = {
     alagamento: {
-      icon: ShieldExclamationIcon, // Ícone real
+      icon: ShieldExclamationIcon,
       title: "Em Caso de Alagamento",
       tips: [
         "Evite contato com as águas de enchentes e não as utilize para consumo ou higiene.",
@@ -32,7 +32,7 @@ export default function HomePage() {
       ],
     },
     ventania: {
-      icon: ShieldExclamationIcon, // Ícone real
+      icon: ShieldExclamationIcon,
       title: "Durante Ventanias Fortes",
       tips: [
         "Abrigue-se em local seguro e resistente, como construções de alvenaria.",
@@ -42,7 +42,7 @@ export default function HomePage() {
       ],
     },
     calor: {
-      icon: SunIcon, // Ícone real
+      icon: SunIcon,
       title: "Ondas de Calor Intensas",
       tips: [
         "Beba bastante água ao longo do dia, mesmo sem sentir sede.",
@@ -57,22 +57,22 @@ export default function HomePage() {
     { name: "Defesa Civil", phone: "199", description: "Alertas e emergências de desastres.", icon: ShieldCheckIcon },
     { name: "Bombeiros", phone: "193", description: "Resgates e incêndios.", icon: FireIcon },
     { name: "SAMU", phone: "192", description: "Emergências médicas.", icon: PlusCircleIcon },
-    { name: "Polícia Militar", phone: "190", description: "Segurança e ordem pública.", icon: UserCircleIcon }, // Ou ShieldExclamationIcon
+    { name: "Polícia Militar", phone: "190", description: "Segurança e ordem pública.", icon: UserCircleIcon },
   ];
 
   const platformFeaturesData = {
     monitoramento: {
-      icon: WifiIcon, // Ícone real
+      icon: WifiIcon, 
       title: "Monitoramento em Tempo Real",
       description: "Acompanhe os reportes da comunidade, dados de sensores e informações meteorológicas atualizadas instantaneamente. Nossa plataforma integra diversas fontes para oferecer uma visão completa e dinâmica dos riscos em desenvolvimento na sua região, permitindo uma resposta mais ágil.",
     },
     alertas: {
-      icon: BellAlertIcon, // Ícone real
+      icon: BellAlertIcon,
       title: "Alertas Inteligentes e Localizados",
       description: "Receba notificações e avisos personalizados sobre riscos potenciais ou confirmados diretamente em sua área de interesse ou ao longo de suas rotas frequentes. Configure suas preferências para ser informado sobre o que realmente importa para você e sua família.",
     },
     comunidade: {
-      icon: UserGroupIcon, // Ícone real
+      icon: UserGroupIcon,
       title: "Comunidade Ativa e Colaborativa",
       description: "Sua participação é fundamental. Contribua com seus reportes, valide informações de outros usuários e ajude a construir um mapa de riscos mais preciso e confiável. Juntos, fortalecemos a resiliência da nossa vizinhança e cidade.",
     }
@@ -253,7 +253,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }

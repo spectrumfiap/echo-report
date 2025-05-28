@@ -3,7 +3,6 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-// Reutilize a interface ShelterInfo aqui ou importe-a de um arquivo de tipos compartilhado
 interface ShelterInfo {
   id: string;
   name: string;
@@ -29,9 +28,9 @@ interface ShelterCardProps {
 const ShelterCard: React.FC<ShelterCardProps> = ({ shelter }) => {
   return (
     <div className="bg-[var(--brand-card-background)] rounded-xl shadow-[var(--shadow-subtle)] overflow-hidden flex flex-col h-full">
-      <div className="relative w-full h-48 sm:h-56"> {/* Espaço para a foto */}
+      <div className="relative w-full h-48 sm:h-56">
         <Image
-          src={shelter.imageUrl || "/assets/placeholder_shelter.png"} // Use um placeholder se a imagem não estiver disponível
+          src={shelter.imageUrl || "/assets/placeholder_shelter.png"}
           alt={`Foto do abrigo ${shelter.name}`}
           fill
           className="object-cover"

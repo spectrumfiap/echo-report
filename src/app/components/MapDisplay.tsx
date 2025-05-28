@@ -4,7 +4,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Circle, DirectionsService, DirectionsRenderer, InfoWindow } from '@react-google-maps/api';
 
-// Define a estrutura de dados para uma área de risco.
 interface RiskArea {
   id: string;
   center: google.maps.LatLngLiteral; // Coordenadas do centro do círculo.
@@ -16,36 +15,30 @@ interface RiskArea {
   lastUpdated?: string; // Data/hora opcional da última atualização.
 }
 
-// Define as propriedades que o componente MapDisplay espera receber.
 interface MapDisplayProps {
   apiKey: string; // Chave da API do Google Maps.
   initialCenter?: google.maps.LatLngLiteral; // Centro inicial do mapa.
   riskAreasData?: RiskArea[]; // Array de áreas de risco a serem exibidas.
 }
 
-// Estilo base para o container do mapa.
 const containerStyle = {
   width: '100%',
-  height: '500px', // Altura fixa para o mapa.
+  height: '500px',
 };
 
-// Centro padrão do mapa, caso nenhum seja fornecido.
 const defaultCenter = {
   lat: -23.55052, // Coordenadas de São Paulo.
   lng: -46.633308
 };
 
-// Configurações de cores para os diferentes níveis de risco dos círculos.
 const riskColors = {
   alto: { fillColor: '#FF0000', strokeColor: '#CC0000'},
   medio: { fillColor: '#FFFF00', strokeColor: '#CCCC00'},
   baixo: { fillColor: '#00FF00', strokeColor: '#00CC00'}
 };
 
-// Componente de ícone simples para ser usado nas InfoWindows.
 const AlertIcon = ({ riskLevel }: { riskLevel: RiskArea['riskLevel'] }) => {
-    let color = "currentColor"; // Cor padrão do ícone.
-    // Define a cor do ícone com base no nível de risco, usando variáveis CSS.
+    let color = "currentColor";
     if (riskLevel === 'alto') color = "var(--alert-red)";
     else if (riskLevel === 'medio') color = "var(--alert-orange)";
     else if (riskLevel === 'baixo') color = "var(--success-green)";
@@ -66,7 +59,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ apiKey, initialCenter = default
     libraries: ['places', 'drawing', 'geometry', 'visualization'],
   });
 
-  // Estados do componente.
   const [map, setMap] = useState<google.maps.Map | null>(null); // Referência à instância do mapa.
   const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null); // Armazena a resposta do serviço de direções.
   const [origin, setOrigin] = useState(''); // Input de origem para cálculo de rota.

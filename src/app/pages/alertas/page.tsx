@@ -20,14 +20,14 @@ const AlertCard = ({ title, severity, source, time, description }: typeof sample
   let borderColor = 'border-gray-300';
 
   if (severity === 'Alto') {
-    bgColor = 'bg-[var(--alert-red)]/10'; // Usando a cor de alerta com opacidade
+    bgColor = 'bg-[var(--alert-red)]/10'; 
     textColor = 'text-[var(--alert-red)]';
     borderColor = 'border-[var(--alert-red)]/50';
   } else if (severity === 'Médio') {
     bgColor = 'bg-[var(--alert-orange)]/10';
     textColor = 'text-[var(--alert-orange)]';
     borderColor = 'border-[var(--alert-orange)]/50';
-  } else if (severity === 'Baixo') { // Exemplo para Baixo
+  } else if (severity === 'Baixo') { 
     bgColor = 'bg-[var(--alert-yellow)]/10';
     textColor = 'text-[var(--alert-yellow)]';
     borderColor = 'border-[var(--alert-yellow)]/50';
