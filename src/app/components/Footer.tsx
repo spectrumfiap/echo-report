@@ -1,6 +1,7 @@
 // src/components/Footer.tsx
 import Link from 'next/link';
 import React from 'react';
+import Image from 'next/image';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();

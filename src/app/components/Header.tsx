@@ -19,7 +19,7 @@ export default function Header() {
           
           {/* Linha Divisória Vertical Branca */}
           <div className="h-8 w-px bg-white/50 mx-3"></div> {/* Ajuste h- (altura), bg- (cor) e mx- (margem) */}
-          
+        
           <Image
             src="/assets/fiapwhite.png" 
             alt="FIAP Logo"
