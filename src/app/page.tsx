@@ -131,7 +131,7 @@ export default function HomePage() {
                           <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-[var(--brand-header-bg)]/10 text-[var(--brand-header-bg)] mr-4 mt-1 md:mt-0`}>
                             <Icon className="w-7 h-7" /> {/* Renderiza o ícone e ajusta o tamanho */}
                           </div>
-                          <h3 className="text-xl md:text-2xl font-semibold text-[var(--brand-text-primary)]">
+                          <h3 className="text-xl md:text-2xl font-semibold text-blue-500">
                             {feature.title}
                           </h3>
                         </div>

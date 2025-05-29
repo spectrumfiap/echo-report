@@ -6,42 +6,47 @@ import { useRouter } from 'next/navigation';
 
 export const availableAlertTypes = [
   'Alagamentos', 
-  'Quedas de árvore', 
-  'Falta de Energia', 
-  'Aglomerações em Abrigo', 
-  'Vazamentos de Gás',
-  'Deslizamentos de Terra'
+  'Ventos Fortes', 
+  'Deslizamentos', 
+  'Incêndios Florestais Próximos', 
+  'Falta de Energia Prolongada',
+  'Problemas de Transporte Público'
 ] as const;
 
 export type AlertType = typeof availableAlertTypes[number];
 
-// Interface para os dados do usuário que serão armazenados
 export interface StoredUser {
   id: string;
   name: string;
-  email: string;
-  passwordHash: string;
-  locationPreference?: string; 
-  subscribedAlerts?: AlertType[]; 
+  email: string; // Email do usuário, ou o email especial do admin
+  passwordHash: string; 
+  locationPreference?: string;
+  subscribedAlerts?: AlertType[];
+  role?: 'user' | 'admin';
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: StoredUser | null;
+  isAdmin: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
-  register: (userData: Omit<StoredUser, 'id' | 'passwordHash'> & {password: string}) => Promise<{ success: boolean, message?: string }>;
+  register: (userData: Omit<StoredUser, 'id' | 'passwordHash' | 'role'> & {password: string}) => Promise<{ success: boolean, message?: string }>;
   updateUserPreferences: (userId: string, preferences: { locationPreference?: string; subscribedAlerts?: AlertType[] }) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USERS_DB_KEY = 'echoReportUsersDB_v2';
-const LOGGED_IN_USER_KEY = 'echoReportLoggedInUser_v2';
+const USERS_DB_KEY = 'echoReportUsersDB_v3';
+const LOGGED_IN_USER_KEY = 'echoReportLoggedInUser_v3';
+
+// Email específico para o login do administrador
+const ADMIN_EMAIL = "admin@echoreport.com"; // Você pode mudar isso
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<StoredUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -51,6 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const loggedInUser = JSON.parse(storedUserJson) as StoredUser;
         setUser(loggedInUser);
         setIsAuthenticated(true);
+        setIsAdmin(loggedInUser.role === 'admin');
       } catch (e) {
         localStorage.removeItem(LOGGED_IN_USER_KEY);
       }
@@ -59,12 +65,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const simulatePasswordHash = (password: string) => `simulated_hash_for_${password}`;
 
-  const register = async (userData: Omit<StoredUser, 'id' | 'passwordHash'> & {password: string}): Promise<{ success: boolean, message?: string }> => {
+  const register = async (userData: Omit<StoredUser, 'id' | 'passwordHash' | 'role'> & {password: string}): Promise<{ success: boolean, message?: string }> => {
     const usersDBJson = localStorage.getItem(USERS_DB_KEY);
     let usersDB: StoredUser[] = usersDBJson ? JSON.parse(usersDBJson) : [];
 
-    if (usersDB.find(u => u.email.toLowerCase() === userData.email.toLowerCase())) {
-      return { success: false, message: 'Este email já está registrado.' };
+    if (usersDB.find(u => u.email.toLowerCase() === userData.email.toLowerCase()) || userData.email.toLowerCase() === ADMIN_EMAIL) {
+      return { success: false, message: 'Este email já está registrado ou é reservado.' };
     }
 
     const newUser: StoredUser = {
@@ -72,24 +78,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       name: userData.name,
       email: userData.email.toLowerCase(),
       passwordHash: simulatePasswordHash(userData.password),
-      locationPreference: userData.locationPreference || '', 
-      subscribedAlerts: userData.subscribedAlerts || [], 
+      locationPreference: userData.locationPreference || '',
+      subscribedAlerts: userData.subscribedAlerts || [],
+      role: 'user',
     };
     usersDB.push(newUser);
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(usersDB));
-    console.log('Usuário registrado (simulado):', newUser);
     return { success: true };
   };
 
   const login = async (email: string, pass: string): Promise<boolean> => {
+    const lowerEmail = email.toLowerCase();
+    
+    // Lógica especial para admin usando um email específico
+    if (lowerEmail === ADMIN_EMAIL && pass === 'admin') { // Senha 'admin' para o email de admin
+      const adminUser: StoredUser = {
+        id: 'admin_id_special',
+        name: 'Administrador',
+        email: ADMIN_EMAIL,
+        passwordHash: simulatePasswordHash('admin'), // O hash aqui é só para consistência da estrutura
+        role: 'admin',
+        locationPreference: 'Todas as áreas',
+        subscribedAlerts: [...availableAlertTypes]
+      };
+      localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(adminUser));
+      setUser(adminUser);
+      setIsAuthenticated(true);
+      setIsAdmin(true);
+      console.log('Login de Administrador bem-sucedido para:', ADMIN_EMAIL);
+      return true;
+    }
+
+    // Lógica para usuários normais
     const usersDBJson = localStorage.getItem(USERS_DB_KEY);
     const usersDB: StoredUser[] = usersDBJson ? JSON.parse(usersDBJson) : [];
-    const foundUser = usersDB.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const foundUser = usersDB.find(u => u.email.toLowerCase() === lowerEmail);
 
     if (foundUser && foundUser.passwordHash === simulatePasswordHash(pass)) {
       localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(foundUser));
       setUser(foundUser);
       setIsAuthenticated(true);
+      setIsAdmin(foundUser.role === 'admin'); // Garante que isAdmin seja false para usuários normais
       return true;
     }
     return false;
@@ -99,18 +128,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem(LOGGED_IN_USER_KEY);
     setUser(null);
     setIsAuthenticated(false);
+    setIsAdmin(false);
     router.push('/');
   };
 
-  // Nova função para atualizar preferências
   const updateUserPreferences = async (userId: string, preferences: { locationPreference?: string; subscribedAlerts?: AlertType[] }): Promise<boolean> => {
     const usersDBJson = localStorage.getItem(USERS_DB_KEY);
     let usersDB: StoredUser[] = usersDBJson ? JSON.parse(usersDBJson) : [];
     const userIndex = usersDB.findIndex(u => u.id === userId);
 
-    if (userIndex === -1) {
-      return false; // Usuário não encontrado
-    }
+    if (userIndex === -1) return false;
 
     usersDB[userIndex] = { ...usersDB[userIndex], ...preferences };
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(usersDB));
@@ -124,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, register, updateUserPreferences }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, isAdmin, login, logout, register, updateUserPreferences }}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Header() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, isAdmin, logout } = useAuth();
 
   return (
     <header className="bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] shadow-lg sticky top-0 z-50">
@@ -33,12 +33,18 @@ export default function Header() {
           <Link href="/pages/reportar" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Reportar</Link>
           <Link href="/pages/alertas" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Alertas</Link>
           <Link href="/pages/abrigos" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Abrigos</Link>
-
+          
           {isAuthenticated ? (
             <>
-              <Link href="/pages/perfil" className="hover:text-[var(--brand-text-header)]/80 transition-colors">
-                Meu Perfil
-              </Link>
+              {isAdmin ? ( // Se for admin, mostra "Área do Colaborador"
+                <Link href="/pages/colaborador" className="font-semibold hover:text-[var(--brand-text-header)]/80 transition-colors">
+                  Área do Colaborador
+                </Link>
+              ) : ( // Se for usuário normal, mostra "Meu Perfil"
+                <Link href="/pages/perfil" className="hover:text-[var(--brand-text-header)]/80 transition-colors">
+                  Meu Perfil
+                </Link>
+              )}
               <button
                 onClick={logout}
                 className="hover:text-[var(--brand-text-header)]/80 transition-colors bg-transparent border-none p-0"

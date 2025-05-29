@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --brand-header-bg: #007AFF;      /* Azul Vivo para o Header */
-  --brand-footer-bg: #2C3E50;      /* Azul Escuro/Petróleo para o Footer */
-  --brand-text-header: #FFFFFF; /* Texto Branco para o Header */
-  --brand-text-footer: #CED4DA; /* Texto Cinza Claro para o Footer */
+  --brand-header-bg: #007AFF;/* Azul Vivo para o Header */
+  --brand-footer-bg: #2C3E50;/* Azul Escuro/Petróleo para o Footer */
+  --brand-text-header: #FFFFFF;/* Texto Branco para o Header */
+  --brand-text-footer: #CED4DA;/* Texto Cinza Claro para o Footer */
   --brand-text-footer-hover: #FFFFFF;
-  --brand-background-page: #F7F9FA;  /* Cinza Muito Claro para o Fundo da Página */
-  --brand-card-background: #FFFFFF;      /* Branco para Cards */
+  --brand-background-page: #F7F9FA;/* Cinza Muito Claro para o Fundo da Página */
+  --brand-card-background: #FFFFFF;/* Branco para Cards */
   --brand-text-primary: #212529; /* Cinza Escuro para Texto Principal */
   --brand-text-secondary: #6C757D;/* Cinza Médio para Texto Secundário */
   

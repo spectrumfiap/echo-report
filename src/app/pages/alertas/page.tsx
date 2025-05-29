@@ -1,11 +1,5 @@
 // src/app/alertas/page.tsx
 import React from 'react';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = { 
-  title: 'Alertas e Avisos - Watch Tower',
-  description: 'Veja os últimos alertas e avisos oficiais e da comunidade.',
-};
 
 // Dados de exemplo para alertas
 const sampleAlerts = [
