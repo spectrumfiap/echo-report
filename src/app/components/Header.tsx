@@ -33,6 +33,7 @@ export default function Header() {
           <Link href="/pages/reportar" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Reportar</Link>
           <Link href="/pages/alertas" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Alertas</Link>
           <Link href="/pages/abrigos" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Abrigos</Link>
+          <Link href="/pages/quem-somos" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Quem Somos</Link>
           
           {isAuthenticated ? (
             <>
