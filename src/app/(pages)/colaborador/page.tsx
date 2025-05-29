@@ -33,10 +33,10 @@ export default function ColaboradorPage() {
   // Array de seções de gerenciamento, agora com 4 itens.
   // Os links href foram ajustados para refletir a estrutura de pastas dentro de /colaborador
   const managementSections = [
-    { name: 'Gerenciar Usuários', href: '/pages/colaborador/usuarios', icon: UsersIcon, description: "Visualizar, editar e gerenciar contas de usuários." },
-    { name: 'Gerenciar Alertas', href: '/pages/colaborador/alertas', icon: BellAlertIcon, description: "Criar, aprovar e monitorar alertas da plataforma." },
-    { name: 'Gerenciar Abrigos', href: '/pages/colaborador/abrigos', icon: HomeModernIcon, description: "Adicionar, atualizar e remover informações de abrigos." },
-    { name: 'Gerenciar Reportes', href: '/pages/colaborador/reportes', icon: ClipboardDocumentListIcon, description: "Moderar e validar reportes enviados pela comunidade." },
+    { name: 'Gerenciar Usuários', href: '/colaborador/usuarios', icon: UsersIcon, description: "Visualizar, editar e gerenciar contas de usuários." },
+    { name: 'Gerenciar Alertas', href: '/colaborador/alertas', icon: BellAlertIcon, description: "Criar, aprovar e monitorar alertas da plataforma." },
+    { name: 'Gerenciar Abrigos', href: '/colaborador/abrigos', icon: HomeModernIcon, description: "Adicionar, atualizar e remover informações de abrigos." },
+    { name: 'Gerenciar Reportes', href: '/colaborador/reportes', icon: ClipboardDocumentListIcon, description: "Moderar e validar reportes enviados pela comunidade." },
   ];
 
   return (

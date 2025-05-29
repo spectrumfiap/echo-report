@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import ReportForm from '../../components/ReportForm';
 
 export const metadata: Metadata = {
-  title: 'Reportar Ocorrência - Spectrum Aware',
+  title: 'Reportar Ocorrência - Echo Report',
   description: 'Contribua com a comunidade reportando um evento ou risco na sua área.',
 };
 

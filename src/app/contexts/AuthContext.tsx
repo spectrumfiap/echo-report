@@ -4,11 +4,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
+// ... (interfaces StoredUser, AlertType, availableAlertTypes, AuthContextType permanecem as mesmas) ...
 export const availableAlertTypes = [
-  'Alagamentos', 
-  'Ventos Fortes', 
-  'Deslizamentos', 
-  'Incêndios Florestais Próximos', 
+  'Alagamentos',
+  'Ventos Fortes',
+  'Deslizamentos',
+  'Incêndios Florestais Próximos',
   'Falta de Energia Prolongada',
   'Problemas de Transporte Público'
 ] as const;
@@ -18,8 +19,7 @@ export type AlertType = typeof availableAlertTypes[number];
 export interface StoredUser {
   id: string;
   name: string;
-  email: string; // Email do usuário, ou o email especial do admin
-  passwordHash: string; 
+  email: string;
   locationPreference?: string;
   subscribedAlerts?: AlertType[];
   role?: 'user' | 'admin';
@@ -31,17 +31,15 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
-  register: (userData: Omit<StoredUser, 'id' | 'passwordHash' | 'role'> & {password: string}) => Promise<{ success: boolean, message?: string }>;
+  register: (userData: Omit<StoredUser, 'id' | 'role'> & {password: string}) => Promise<{ success: boolean, message?: string }>;
   updateUserPreferences: (userId: string, preferences: { locationPreference?: string; subscribedAlerts?: AlertType[] }) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USERS_DB_KEY = 'echoReportUsersDB_v3';
 const LOGGED_IN_USER_KEY = 'echoReportLoggedInUser_v3';
+const ADMIN_EMAIL = "admin@echoreport.com";
 
-// Email específico para o login do administrador
-const ADMIN_EMAIL = "admin@echoreport.com"; // Você pode mudar isso
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -63,40 +61,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const simulatePasswordHash = (password: string) => `simulated_hash_for_${password}`;
-
-  const register = async (userData: Omit<StoredUser, 'id' | 'passwordHash' | 'role'> & {password: string}): Promise<{ success: boolean, message?: string }> => {
-    const usersDBJson = localStorage.getItem(USERS_DB_KEY);
-    let usersDB: StoredUser[] = usersDBJson ? JSON.parse(usersDBJson) : [];
-
-    if (usersDB.find(u => u.email.toLowerCase() === userData.email.toLowerCase()) || userData.email.toLowerCase() === ADMIN_EMAIL) {
-      return { success: false, message: 'Este email já está registrado ou é reservado.' };
-    }
-
-    const newUser: StoredUser = {
-      id: Math.random().toString(36).substring(2, 15),
-      name: userData.name,
-      email: userData.email.toLowerCase(),
-      passwordHash: simulatePasswordHash(userData.password),
-      locationPreference: userData.locationPreference || '',
-      subscribedAlerts: userData.subscribedAlerts || [],
-      role: 'user',
-    };
-    usersDB.push(newUser);
-    localStorage.setItem(USERS_DB_KEY, JSON.stringify(usersDB));
-    return { success: true };
-  };
-
   const login = async (email: string, pass: string): Promise<boolean> => {
     const lowerEmail = email.toLowerCase();
-    
-    // Lógica especial para admin usando um email específico
-    if (lowerEmail === ADMIN_EMAIL && pass === 'admin') { // Senha 'admin' para o email de admin
+
+    if (lowerEmail === ADMIN_EMAIL && pass === 'admin') {
       const adminUser: StoredUser = {
         id: 'admin_id_special',
         name: 'Administrador',
         email: ADMIN_EMAIL,
-        passwordHash: simulatePasswordHash('admin'), // O hash aqui é só para consistência da estrutura
         role: 'admin',
         locationPreference: 'Todas as áreas',
         subscribedAlerts: [...availableAlertTypes]
@@ -105,25 +77,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(adminUser);
       setIsAuthenticated(true);
       setIsAdmin(true);
-      console.log('Login de Administrador bem-sucedido para:', ADMIN_EMAIL);
       return true;
     }
 
-    // Lógica para usuários normais
-    const usersDBJson = localStorage.getItem(USERS_DB_KEY);
-    const usersDB: StoredUser[] = usersDBJson ? JSON.parse(usersDBJson) : [];
-    const foundUser = usersDB.find(u => u.email.toLowerCase() === lowerEmail);
+    try {
+      const apiKey = '1234';
+      const response = await fetch('http://localhost:8080/usuarios/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+        },
+        body: JSON.stringify({ email: lowerEmail, password: pass }),
+      });
 
-    if (foundUser && foundUser.passwordHash === simulatePasswordHash(pass)) {
-      localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(foundUser));
-      setUser(foundUser);
-      setIsAuthenticated(true);
-      setIsAdmin(foundUser.role === 'admin'); // Garante que isAdmin seja false para usuários normais
-      return true;
+      if (!response.ok) {
+        return false;
+      }
+      
+      const loggedInUserFromApi = await response.json();
+
+      if (loggedInUserFromApi) {
+        const frontEndUser: StoredUser = {
+          id: String(loggedInUserFromApi.userId || loggedInUserFromApi.id),
+          name: loggedInUserFromApi.name || loggedInUserFromApi.nomeCompleto, // Backend pode retornar 'nomeCompleto' ou 'name'
+          email: loggedInUserFromApi.email,
+          role: loggedInUserFromApi.role || 'user',
+          locationPreference: loggedInUserFromApi.locationPreference,
+          subscribedAlerts: loggedInUserFromApi.subscribedAlerts,
+        };
+
+        localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(frontEndUser));
+        setUser(frontEndUser);
+        setIsAuthenticated(true);
+        setIsAdmin(frontEndUser.role === 'admin');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Erro de rede ou outro erro ao tentar logar via API:', error);
+      return false;
     }
-    return false;
   };
-
+  
   const logout = () => {
     localStorage.removeItem(LOGGED_IN_USER_KEY);
     setUser(null);
@@ -132,23 +128,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/');
   };
 
+  const register = async (
+    userData: Omit<StoredUser, 'id' | 'role'> & { password: string }
+  ): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const apiKey = '1234'; // Sua API Key estática
+
+      const payload = {
+        nomeCompleto: userData.name, // Mapeia 'name' do frontend para 'nomeCompleto' do DTO
+        email: userData.email,
+        password: userData.password,
+        locationPreference: userData.locationPreference || "", // Garante que não é undefined
+        subscribedAlerts: userData.subscribedAlerts || [],   // Garante que não é undefined
+      };
+
+      const response = await fetch('http://localhost:8080/usuarios/registrar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Erro HTTP: ${response.status}`;
+        try {
+          const errorData = await response.text(); // Backend retorna mensagem de erro como texto simples
+          errorMessage = errorData || errorMessage;
+        } catch (e) {
+          // Falha ao ler corpo do erro, usa a mensagem padrão.
+        }
+        return { success: false, message: errorMessage };
+      }
+
+      // A API retorna o usuário registrado no sucesso (201 CREATED)
+      // Não precisamos fazer nada com o corpo da resposta aqui,
+      // pois a página de registro já lida com o login subsequente.
+      // const registeredUser = await response.json(); 
+      return { success: true };
+
+    } catch (error: any) {
+      console.error('Falha ao registrar usuário via API:', error);
+      return { success: false, message: error.message || 'Falha ao conectar com o servidor para registro.' };
+    }
+  };
+  
+  // A função updateUserPreferences também precisará chamar a API
   const updateUserPreferences = async (userId: string, preferences: { locationPreference?: string; subscribedAlerts?: AlertType[] }): Promise<boolean> => {
-    const usersDBJson = localStorage.getItem(USERS_DB_KEY);
-    let usersDB: StoredUser[] = usersDBJson ? JSON.parse(usersDBJson) : [];
-    const userIndex = usersDB.findIndex(u => u.id === userId);
-
-    if (userIndex === -1) return false;
-
-    usersDB[userIndex] = { ...usersDB[userIndex], ...preferences };
-    localStorage.setItem(USERS_DB_KEY, JSON.stringify(usersDB));
-
+    console.warn("A função updateUserPreferences ainda usa localStorage. Precisa ser integrada com a API.");
+    // Lógica de localStorage mantida por enquanto
     if (user && user.id === userId) {
       const updatedUser = { ...user, ...preferences };
       setUser(updatedUser);
       localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(updatedUser));
+      return true;
     }
-    return true;
+    return false;
   };
+
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, isAdmin, login, logout, register, updateUserPreferences }}>

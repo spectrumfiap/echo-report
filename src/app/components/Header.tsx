@@ -29,20 +29,20 @@ export default function Header() {
         </Link>
 
         <nav className="flex items-center space-x-4 md:space-x-6 text-sm md:text-base font-medium">
-          <Link href="/pages/mapa" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Mapa</Link>
-          <Link href="/pages/reportar" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Reportar</Link>
-          <Link href="/pages/alertas" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Alertas</Link>
-          <Link href="/pages/abrigos" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Abrigos</Link>
-          <Link href="/pages/quem-somos" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Quem Somos</Link>
+          <Link href="/mapa" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Mapa</Link>
+          <Link href="/reportar" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Reportar</Link>
+          <Link href="/alertas" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Alertas</Link>
+          <Link href="/abrigos" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Abrigos</Link>
+          <Link href="/quem-somos" className="hover:text-[var(--brand-text-header)]/80 transition-colors">Quem Somos</Link>
           
           {isAuthenticated ? (
             <>
               {isAdmin ? ( // Se for admin, mostra "Área do Colaborador"
-                <Link href="/pages/colaborador" className="font-semibold hover:text-[var(--brand-text-header)]/80 transition-colors">
+                <Link href="/colaborador" className="font-semibold hover:text-[var(--brand-text-header)]/80 transition-colors">
                   Área do Colaborador
                 </Link>
               ) : ( // Se for usuário normal, mostra "Meu Perfil"
-                <Link href="/pages/perfil" className="hover:text-[var(--brand-text-header)]/80 transition-colors">
+                <Link href="/perfil" className="hover:text-[var(--brand-text-header)]/80 transition-colors">
                   Meu Perfil
                 </Link>
               )}

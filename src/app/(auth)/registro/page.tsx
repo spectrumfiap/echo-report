@@ -15,13 +15,15 @@ export default function RegistroPage() {
   const [subscribedAlerts, setSubscribedAlerts] = useState<AlertType[]>([]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  
   const router = useRouter();
-  const { register, login } = useAuth();
+  // Se AuthProvider não estiver acima desta página, a linha abaixo causará um erro.
+  const { register, login } = useAuth(); 
 
   const handleAlertSubscriptionChange = (alertType: AlertType) => {
-    setSubscribedAlerts(prev => 
-      prev.includes(alertType) 
-        ? prev.filter(item => item !== alertType) 
+    setSubscribedAlerts(prev =>
+      prev.includes(alertType)
+        ? prev.filter(item => item !== alertType)
         : [...prev, alertType]
     );
   };
@@ -51,22 +53,24 @@ export default function RegistroPage() {
     const registrationResult = await register({
       name,
       email,
-      password, // Passa a senha em texto plano para o register, que simulará o hash
+      password,
       locationPreference,
       subscribedAlerts
     });
 
     if (registrationResult.success) {
-      setSuccessMessage('Registro realizado com sucesso! Você será logado e redirecionado...');
+      setSuccessMessage('Registro realizado com sucesso! Tentando fazer login...');
       const loginSuccess = await login(email, password);
       if (loginSuccess) {
-        setTimeout(() => router.push('/'), 2000); // Redireciona para home após 2s
+        setSuccessMessage('Login realizado! Redirecionando para a página inicial...');
+        setTimeout(() => router.push('/'), 2000);
       } else {
-        setError('Erro ao fazer login após o registro. Tente fazer login manualmente.');
-        setTimeout(() => router.push('/login'), 2000);
+        setError('Erro ao fazer login após o registro. Por favor, tente fazer login manualmente.');
+        setSuccessMessage(''); // Limpa msg de sucesso se login falhar
+        setTimeout(() => router.push('/login'), 3000);
       }
     } else {
-      setError(registrationResult.message || 'Erro ao registrar. Tente novamente.');
+      setError(registrationResult.message || 'Erro ao registrar. Verifique os dados e tente novamente.');
     }
   };
 
@@ -79,7 +83,6 @@ export default function RegistroPage() {
         {error && <p className="mb-4 text-center text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
         {successMessage && <p className="mb-4 text-center text-sm text-green-600 bg-green-100 p-3 rounded-md">{successMessage}</p>}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Campos de Nome, Email, Senha, Confirmar Senha  */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Nome Completo</label>
             <input id="name" name="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm"/>
@@ -97,7 +100,6 @@ export default function RegistroPage() {
             <input id="confirmPassword" name="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm"/>
           </div>
 
-          {/* Preferência de Localização */}
           <div>
             <label htmlFor="locationPreference" className="block text-sm font-medium text-[var(--brand-text-secondary)]">
               Localização Principal de Interesse (Bairro, Cidade - opcional)
@@ -113,7 +115,6 @@ export default function RegistroPage() {
             />
           </div>
 
-          {/*Tipos de Alerta Ativados */}
           <div>
             <span className="block text-sm font-medium text-[var(--brand-text-secondary)] mb-2">
               Quais tipos de alerta você gostaria de receber? (opcional)

@@ -1,11 +1,12 @@
-// src/components/ReportForm.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const ReportForm: React.FC = () => {
-  const { user, isAuthenticated } = useAuth(); // Pega o usuário e o estado de autenticação
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const [reporterName, setReporterName] = useState('');
   const [eventType, setEventType] = useState('Alagamento');
@@ -13,12 +14,14 @@ const ReportForm: React.FC = () => {
   const [location, setLocation] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitStatus, setSubmitStatus] = useState<{ type: 'error'; message: string } | null>(null);
 
   useEffect(() => {
     if (isAuthenticated && user) {
       setReporterName(user.name);
     } else {
-      setReporterName(''); // Limpa se não estiver logado ou se fizer logout
+      setReporterName('');
     }
   }, [isAuthenticated, user]);
 
@@ -39,47 +42,77 @@ const ReportForm: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitStatus(null);
 
     if (!location || !description) {
-        alert("Localização e Descrição são campos obrigatórios.");
-        return;
+      setSubmitStatus({ type: 'error', message: "Localização e Descrição são campos obrigatórios." });
+      return;
     }
     if (!isAuthenticated && !reporterName.trim()) {
-        alert("Por favor, informe seu nome para o reporte ou faça login.");
-        return;
+      setSubmitStatus({ type: 'error', message: "Por favor, informe seu nome para o reporte ou faça login." });
+      return;
     }
 
+    setIsSubmitting(true);
 
     const formDataForSubmission = new FormData();
-    formDataForSubmission.append('reporterName', reporterName || "Anônimo"); // Se o nome estiver vazio e o usuário não logado, pode ser "Anônimo"
+    formDataForSubmission.append('reporterName', reporterName || "Anônimo");
     formDataForSubmission.append('eventType', eventType);
     formDataForSubmission.append('description', description);
     formDataForSubmission.append('location', location);
     if (selectedFile) {
       formDataForSubmission.append('image', selectedFile, selectedFile.name);
     }
-    // Adiciona o ID do usuário se estiver logado e disponível
     if (isAuthenticated && user && user.id) {
-        formDataForSubmission.append('userId', user.id);
+      formDataForSubmission.append('userId', String(user.id));
     }
 
+    try {
+      const apiKey = '1234';
+      const response = await fetch('http://localhost:8080/reportes', {
+        method: 'POST',
+        headers: {
+          'X-API-Key': apiKey,
+        },
+        body: formDataForSubmission,
+      });
 
-    console.log('Dados do Formulário a serem enviados:');
-    for (let pair of formDataForSubmission.entries()) {
-      console.log(pair[0]+ ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
+      if (!response.ok) {
+        let errorMessage = `Erro HTTP: ${response.status}`;
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.entity || errorData.error || errorMessage;
+        } catch (e) {
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      alert(`Report enviado com sucesso! Você será redirecionado para a página inicial.`);
+      router.push('/');
+
+    } catch (error: any) {
+      console.error('Falha ao enviar reporte:', error);
+      setSubmitStatus({ type: 'error', message: error.message || 'Falha ao conectar com o servidor.' });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    alert('Report enviado!');
- 
   };
 
   return (
-    <form 
-      onSubmit={handleSubmit} 
+    <form
+      onSubmit={handleSubmit}
       className="space-y-6 bg-[var(--brand-card-background)] p-6 md:p-8 rounded-lg shadow-[var(--shadow-subtle)] max-w-2xl mx-auto"
-      encType="multipart/form-data"
     >
-      {/* Campo Nome do Reportador */}
+      {submitStatus && submitStatus.type === 'error' && (
+        <div
+          className={`p-4 mb-4 text-sm rounded-lg bg-red-100 text-red-700`}
+          role="alert"
+        >
+          {submitStatus.message}
+        </div>
+      )}
+
       <div>
         <label htmlFor="reporterName" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
           Seu Nome {isAuthenticated ? '(Automático)' : '(Opcional se não logado, mas recomendado)'}
@@ -92,12 +125,11 @@ const ReportForm: React.FC = () => {
           onChange={(e) => setReporterName(e.target.value)}
           className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors disabled:bg-slate-100 disabled:text-slate-500"
           placeholder={isAuthenticated ? "Nome preenchido automaticamente" : "Seu nome (ou deixe em branco para anônimo)"}
-          disabled={isAuthenticated} // Torna o campo somente leitura se o usuário estiver logado
+          disabled={isAuthenticated}
         />
-         {!isAuthenticated && <p className="mt-1 text-xs text-[var(--brand-text-secondary)]">Faça login para preencher seu nome automaticamente.</p>}
+        {!isAuthenticated && <p className="mt-1 text-xs text-[var(--brand-text-secondary)]">Faça login para preencher seu nome automaticamente.</p>}
       </div>
 
-      {/* Campos existentes (Tipo de Evento, Localização, Descrição) ... */}
       <div>
         <label htmlFor="eventType" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
           Tipo de Evento
@@ -151,14 +183,13 @@ const ReportForm: React.FC = () => {
         />
       </div>
 
-      {/* campo para Upload de Imagem */}
       <div>
         <label htmlFor="imageUpload" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
           Foto da Ocorrência (Opcional)
         </label>
-        <input 
-          type="file" 
-          name="imageUpload" 
+        <input
+          type="file"
+          name="imageUpload"
           id="imageUpload"
           accept="image/png, image/jpeg, image/gif"
           onChange={handleFileChange}
@@ -171,12 +202,13 @@ const ReportForm: React.FC = () => {
           </div>
         )}
       </div>
-      
+
       <button
         type="submit"
-        className="w-full bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-opacity-80 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:ring-opacity-50"
+        disabled={isSubmitting}
+        className="w-full bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-opacity-80 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Enviar Reporte
+        {isSubmitting ? 'Enviando...' : 'Enviar Reporte'}
       </button>
     </form>
   );

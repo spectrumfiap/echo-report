@@ -4,9 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 interface ShelterInfo {
-  id: string;
+  id: number;
   name: string;
-  imageUrl: string;
+  imageUrl?: string;
   address: string;
   neighborhood: string;
   cityState: string;
