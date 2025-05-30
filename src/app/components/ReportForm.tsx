@@ -64,7 +64,9 @@ const ReportForm: React.FC = () => {
       formDataForSubmission.append('image', selectedFile, selectedFile.name);
     }
     if (isAuthenticated && user && user.id) {
-      formDataForSubmission.append('userId', String(user.id));
+      if (user.id !== 'admin_id_special') {
+        formDataForSubmission.append('userId', String(user.id));
+      }
     }
 
     try {
@@ -78,17 +80,30 @@ const ReportForm: React.FC = () => {
       });
 
       if (!response.ok) {
-        let errorMessage = `Erro HTTP: ${response.status}`;
+        let backendErrorMessage = `Erro HTTP: ${response.status} (${response.statusText || 'Bad Request'})`;
         try {
-            const errorData = await response.json();
-            errorMessage = errorData.message || errorData.entity || errorData.error || errorMessage;
+            const errorContentType = response.headers.get("content-type");
+            if (errorContentType && errorContentType.includes("application/json")) {
+                const errorData = await response.json();
+                if (errorData) {
+                    backendErrorMessage = errorData.message || errorData.title || errorData.detail || 
+                                         (errorData.violations && errorData.violations[0]?.message) || 
+                                         (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
+                }
+            } else {
+                const errorText = await response.text();
+                if (errorText) {
+                    backendErrorMessage = errorText; 
+                }
+            }
         } catch (e) {
+            // Não conseguiu ler o corpo do erro, a mensagem inicial já é um bom fallback
         }
-        throw new Error(errorMessage);
+        throw new Error(backendErrorMessage);
       }
 
       const result = await response.json();
-      alert(`Report enviado com sucesso! Você será redirecionado para a página inicial.`);
+      alert(`Reporte enviado com sucesso! Você será redirecionado para a página inicial.`);
       router.push('/');
 
     } catch (error: any) {
