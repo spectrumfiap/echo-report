@@ -12,6 +12,7 @@ import {
   BellAlertIcon,
   HomeModernIcon,
   ClipboardDocumentListIcon,
+  MapIcon
 } from '@heroicons/react/24/outline';
 
 export default function ColaboradorPage() {
@@ -37,6 +38,7 @@ export default function ColaboradorPage() {
     { name: 'Gerenciar Alertas', href: '/colaborador/alertas', icon: BellAlertIcon, description: "Criar, aprovar e monitorar alertas da plataforma." },
     { name: 'Gerenciar Abrigos', href: '/colaborador/abrigos', icon: HomeModernIcon, description: "Adicionar, atualizar e remover informações de abrigos." },
     { name: 'Gerenciar Reportes', href: '/colaborador/reportes', icon: ClipboardDocumentListIcon, description: "Moderar e validar reportes enviados pela comunidade." },
+    { name: 'Gerenciar Mapa', href: '/colaborador/mapas', icon: MapIcon, description: "Gerenciamento do mapa interativo" },
   ];
 
   return (
