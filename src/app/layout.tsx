@@ -16,9 +16,6 @@ const kanit = Kanit({
 export const metadata: Metadata = {
   title: 'EchoReport - Monitoramento e Alerta Urbano',
   description: 'Plataforma colaborativa para monitoramento e alerta de riscos urbanos.',
-  icons: {
-    icon: '/favicon.ico',
-  },
 };
 
 export default function RootLayout({
@@ -41,7 +38,7 @@ export default function RootLayout({
           <Footer />
         </AuthProvider>
 
-        {/* Script de configuração do Chatbase */}
+        {/* Script de configuração do Chatbot*/}
         <Script id="chatbase-config" strategy="lazyOnload">
           {`
             window.chatbaseConfig = {
@@ -49,7 +46,7 @@ export default function RootLayout({
             }
           `}
         </Script>
-        {/* Script principal de carregamento do Chatbase */}
+        {/* Script principal de carregamento do Chat*/}
         <Script 
           src="https://www.chatbase.co/embed.min.js" 
           id={chatbaseChatbotId} 

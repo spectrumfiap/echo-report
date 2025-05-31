@@ -48,15 +48,16 @@ const ReportForm: React.FC = () => {
       setSubmitStatus({ type: 'error', message: "Localização e Descrição são campos obrigatórios." });
       return;
     }
-    if (!isAuthenticated && !reporterName.trim()) {
-      setSubmitStatus({ type: 'error', message: "Por favor, informe seu nome para o reporte ou faça login." });
-      return;
-    }
+    // REMOVIDA A VALIDAÇÃO QUE OBRIGAVA O NOME PARA NÃO LOGADOS
+    // if (!isAuthenticated && !reporterName.trim()) {
+    //   setSubmitStatus({ type: 'error', message: "Por favor, informe seu nome para o reporte ou faça login." });
+    //   return;
+    // }
 
     setIsSubmitting(true);
 
     const formDataForSubmission = new FormData();
-    formDataForSubmission.append('reporterName', reporterName || "Anônimo");
+    formDataForSubmission.append('reporterName', reporterName.trim() || "Anônimo"); // Usa .trim() e depois fallback para "Anônimo"
     formDataForSubmission.append('eventType', eventType);
     formDataForSubmission.append('description', description);
     formDataForSubmission.append('location', location);
@@ -97,7 +98,7 @@ const ReportForm: React.FC = () => {
                 }
             }
         } catch (e) {
-            // Não conseguiu ler o corpo do erro, a mensagem inicial já é um bom fallback
+            // Não conseguiu ler o corpo do erro
         }
         throw new Error(backendErrorMessage);
       }
@@ -130,7 +131,7 @@ const ReportForm: React.FC = () => {
 
       <div>
         <label htmlFor="reporterName" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
-          Seu Nome {isAuthenticated ? '(Automático)' : '(Opcional se não logado, mas recomendado)'}
+          Seu Nome {isAuthenticated ? '(Automático)' : '(Opcional)'}
         </label>
         <input
           type="text"
@@ -142,7 +143,7 @@ const ReportForm: React.FC = () => {
           placeholder={isAuthenticated ? "Nome preenchido automaticamente" : "Seu nome (ou deixe em branco para anônimo)"}
           disabled={isAuthenticated}
         />
-        {!isAuthenticated && <p className="mt-1 text-xs text-[var(--brand-text-secondary)]">Faça login para preencher seu nome automaticamente.</p>}
+        {!isAuthenticated && <p className="mt-1 text-xs text-[var(--brand-text-secondary)]">Faça login para preencher seu nome automaticamente ou reporte anonimamente.</p>}
       </div>
 
       <div>

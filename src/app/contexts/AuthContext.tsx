@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
-// ... (interfaces StoredUser, AlertType, availableAlertTypes, AuthContextType permanecem as mesmas) ...
+// ... (interfaces StoredUser, AlertType, availableAlertTypes, AuthContextType permanecem as mesmas)
 export const availableAlertTypes = [
   'Alagamentos',
   'Ventos Fortes',
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userData: Omit<StoredUser, 'id' | 'role'> & { password: string }
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      const apiKey = '1234'; // Sua API Key estática
+      const apiKey = '1234'; //API Key
 
       const payload = {
         nomeCompleto: userData.name, // Mapeia 'name' do frontend para 'nomeCompleto' do DTO
@@ -157,14 +157,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const errorData = await response.text(); // Backend retorna mensagem de erro como texto simples
           errorMessage = errorData || errorMessage;
         } catch (e) {
-          // Falha ao ler corpo do erro, usa a mensagem padrão.
         }
         return { success: false, message: errorMessage };
       }
 
       // A API retorna o usuário registrado no sucesso (201 CREATED)
       // Não precisamos fazer nada com o corpo da resposta aqui,
-      // pois a página de registro já lida com o login subsequente.
+      // pois a página de registro já lida com o login.
       // const registeredUser = await response.json(); 
       return { success: true };
 

@@ -90,12 +90,12 @@ export default function HomePage() {
           Sua plataforma colaborativa para monitoramento e alerta de riscos urbanos causados por eventos climáticos extremos. Juntos, construímos um país mais seguro e resiliente.
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6">
-          <Link href="/pages/reportar"
+          <Link href="/reportar"
             className="w-full sm:w-auto bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] font-semibold px-8 py-3.5 rounded-lg shadow-md hover:bg-opacity-80 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:ring-opacity-50 text-lg transform hover:scale-105"
           >
             Reportar Ocorrência
           </Link>
-          <Link href="/pages/alertas"
+          <Link href="/alertas"
             className="w-full sm:w-auto bg-red-600 text-white font-semibold px-8 py-3.5 rounded-lg shadow-md hover:bg-red-700 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 text-lg transform hover:scale-105"
           >
             Ver Alertas Atuais
@@ -129,13 +129,13 @@ export default function HomePage() {
                       <div key={key}>
                         <div className="flex items-start md:items-center mb-2">
                           <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-[var(--brand-header-bg)]/10 text-[var(--brand-header-bg)] mr-4 mt-1 md:mt-0`}>
-                            <Icon className="w-7 h-7" /> {/* Renderiza o ícone e ajusta o tamanho */}
+                            <Icon className="w-7 h-7" />
                           </div>
                           <h3 className="text-xl md:text-2xl font-semibold text-blue-500">
                             {feature.title}
                           </h3>
                         </div>
-                        <p className="text-[var(--brand-text-secondary)] text-sm md:text-base leading-relaxed lg:pl-[calc(3rem+1rem)]"> {/* 3rem (w-12) + 1rem (mr-4) */}
+                        <p className="text-[var(--brand-text-secondary)] text-sm md:text-base leading-relaxed lg:pl-[calc(3rem+1rem)]">
                           {feature.description}
                         </p>
                         {index < arr.length - 1 && <hr className="my-6 md:my-8 border-slate-200 dark:border-slate-700" />}
@@ -175,11 +175,11 @@ export default function HomePage() {
                       <div key={categoryKey}>
                         <div className="flex items-start md:items-center mb-2">
                           <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-[var(--brand-header-bg)]/10 text-[var(--brand-header-bg)] mr-4 mt-1 md:mt-0`}>
-                            <Icon className="w-7 h-7" /> {/* Renderiza o ícone e ajusta o tamanho */}
+                            <Icon className="w-7 h-7" /> 
                           </div>
                           <h3 className="text-xl md:text-2xl font-semibold text-[var(--brand-header-bg)]">{category.title}</h3>
                         </div>
-                        <ul className="space-y-2 text-[var(--brand-text-secondary)] text-sm md:text-base leading-relaxed lg:pl-[calc(3rem+1rem)]"> {/* 3rem (w-12) + 1rem (mr-4) */}
+                        <ul className="space-y-2 text-[var(--brand-text-secondary)] text-sm md:text-base leading-relaxed lg:pl-[calc(3rem+1rem)]"> 
                           {category.tips.map((tip, tipIndex) => (
                             <li key={tipIndex} className="flex items-start">
                               <CheckCircleIcon className="w-5 h-5 text-[var(--brand-header-bg)] mr-2 mt-1 flex-shrink-0" /> {/* Ícone de Checkmark */}
@@ -228,7 +228,7 @@ export default function HomePage() {
                         >
                           <div className="flex items-center mb-1">
                             <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-[var(--brand-header-bg)]/10 text-[var(--brand-header-bg)] mr-4 mt-1 md:mt-0`}>
-                              <Icon className="w-7 h-7" /> {/* Renderiza o ícone e ajusta o tamanho */}
+                              <Icon className="w-7 h-7" /> 
                             </div>
                             <div>
                               <h3 className="text-xl md:text-2xl font-semibold text-[var(--brand-header-bg)] group-hover:text-opacity-80">
@@ -239,7 +239,7 @@ export default function HomePage() {
                               </p>
                             </div>
                           </div>
-                          <p className="text-sm text-[var(--brand-text-secondary)] lg:pl-[calc(3rem+1rem)]"> {/* 3rem (w-12) + 1rem (mr-4) */}
+                          <p className="text-sm text-[var(--brand-text-secondary)] lg:pl-[calc(3rem+1rem)]">
                             {contact.description}
                           </p>
                         </a>

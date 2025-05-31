@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Header() {
-  const { isAuthenticated, user, isAdmin, logout } = useAuth();
+  const { isAuthenticated, isAdmin, logout } = useAuth();
 
   return (
     <header className="bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] shadow-lg sticky top-0 z-50">
