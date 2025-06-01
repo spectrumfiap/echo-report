@@ -1,9 +1,10 @@
-// src/app/abrigos/page.tsx (ou caminho similar)
+// src/app/abrigos/page.tsx
 "use client";
 
 import React, { useEffect, useState } from 'react';
 import ShelterCard from '../../components/ShelterCard';
 import AnimatedSection from '../../components/AnimatedSection';
+import { InformationCircleIcon } from '@heroicons/react/24/outline'; // Ícone para o aviso
 
 interface ShelterInfo {
   id: number;
@@ -23,18 +24,25 @@ interface ShelterInfo {
   googleMapsUrl?: string;
 }
 
+type NoticeStateType = 'hidden' | 'entering' | 'visible' | 'leaving';
+const NOTICE_VISIBLE_DURATION = 8000; // Aviso visível por 8 segundos
+const NOTICE_FADE_DURATION = 500;     // Duração da animação de fade (ms) para corresponder a duration-500
+
 export default function AbrigosPage() {
   const [sheltersToDisplay, setSheltersToDisplay] = useState<ShelterInfo[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [noticeState, setNoticeState] = useState<NoticeStateType>('hidden');
 
   useEffect(() => {
     const fetchShelters = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const apiKey = '1234';
-        const response = await fetch('http://localhost:8080/abrigos', {
+        const apiKey = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        
+        const response = await fetch(`${apiBaseUrl}/abrigos`, {
           method: 'GET',
           headers: { 'X-API-Key': apiKey }
         });
@@ -58,7 +66,8 @@ export default function AbrigosPage() {
           throw new Error(errorMessage);
         }
         const data: ShelterInfo[] = await response.json();
-        setSheltersToDisplay(data);
+        // Ordenar abrigos por nome, por exemplo, ou deixar como a API retorna
+        setSheltersToDisplay(data.sort((a,b) => a.name.localeCompare(b.name)));
       } catch (e: any) {
         console.error("Falha ao buscar abrigos:", e);
         setError(e.message || "Ocorreu um erro ao buscar os abrigos.");
@@ -66,21 +75,66 @@ export default function AbrigosPage() {
         setIsLoading(false);
       }
     };
+    
     fetchShelters();
+
+    const initialDelayTimer = setTimeout(() => {
+      setNoticeState('entering');
+    }, 300);
+
+    const visibilityTimer = setTimeout(() => {
+      setNoticeState('leaving');
+    }, 300 + NOTICE_VISIBLE_DURATION); 
+
+    return () => {
+      clearTimeout(initialDelayTimer);
+      clearTimeout(visibilityTimer);
+    };
   }, []);
+
+  useEffect(() => {
+    let transitionEndTimerId: NodeJS.Timeout;
+    if (noticeState === 'entering') {
+      const rafId = requestAnimationFrame(() => {
+        setNoticeState('visible');
+      });
+      return () => cancelAnimationFrame(rafId);
+    } else if (noticeState === 'leaving') {
+      transitionEndTimerId = setTimeout(() => {
+        setNoticeState('hidden'); 
+      }, NOTICE_FADE_DURATION);
+      return () => clearTimeout(transitionEndTimerId);
+    }
+  }, [noticeState]);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-10 md:py-12">
       <AnimatedSection animationType="fadeInUp" delay="duration-500">
-        <section className="text-center mb-10 md:mb-12">
+        <section className="text-center mb-8 md:mb-10"> {/* Reduzido mb */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--brand-header-bg)]">
-            Abrigos e Pontos de Apoio em São Paulo
+            Abrigos e Pontos de Apoio
           </h1>
           <p className="text-lg text-[var(--brand-text-secondary)] mt-4 max-w-2xl mx-auto">
-            Quando abrigos temporários para desastres naturais não estiverem disponíveis, preencheremos com centros de acolhimentos convencionais.
+            Encontre locais seguros e serviços de acolhimento disponíveis na sua região.
           </p>
         </section>
       </AnimatedSection>
+
+      {noticeState !== 'hidden' && (
+        <div
+          className={`
+            mb-6 p-3 bg-blue-50 border-l-4 border-[var(--brand-header-bg)] text-[var(--brand-header-bg)]/80 
+            rounded-md shadow-sm text-sm flex items-start
+            transition-opacity ease-in-out duration-${NOTICE_FADE_DURATION} 
+            ${noticeState === 'visible' ? 'opacity-100' : 'opacity-0'}
+          `}
+        >
+          <InformationCircleIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+          <span>
+            Estamos utilizando serviços de hospedagem gratuitos para nossa API. O carregamento inicial dos abrigos pode levar alguns segundos. Agradecemos a sua paciência!
+          </span>
+        </div>
+      )}
 
       {isLoading && (
         <AnimatedSection animationType="fadeIn" delay="duration-300">
@@ -103,10 +157,10 @@ export default function AbrigosPage() {
         <AnimatedSection
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
           staggerChildren
-          childDelayIncrement={150}   // AUMENTADO: Atraso entre cada card
+          childDelayIncrement={150}
           animationType="fadeInUp"
-          delay="duration-500"      // AUMENTADO: Duração da animação de cada card
-          threshold={0.1}           // AUMENTADO LEVEMENTE: Para o container da grade
+          delay="duration-500"
+          threshold={0.1}
         >
           {sheltersToDisplay.map((shelter) => (
             <ShelterCard key={shelter.id} shelter={shelter} />

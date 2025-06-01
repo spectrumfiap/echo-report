@@ -114,7 +114,7 @@ export default function HomePage() {
     monitoramento: {
       icon: WifiIcon,
       title: "Monitoramento em Tempo Real",
-      description: "Acompanhe os reportes da comunidade, dados de sensores e informações meteorológicas atualizadas instantaneamente. Nossa plataforma integra diversas fontes para oferecer uma visão completa e dinâmica dos riscos em desenvolvimento na sua região, permitindo uma resposta mais ágil.",
+      description: "Acompanhe os reportes da comunidade, alertas e informações atualizadas todos os dias. Nossa plataforma integra diversas fontes para oferecer uma visão completa e dinâmica dos riscos em desenvolvimento na sua região, permitindo uma resposta mais ágil.",
     },
     alertas: {
       icon: BellAlertIcon,

@@ -1,8 +1,9 @@
-// src/app/alertas/page.tsx (ou caminho similar)
+// src/app/alertas/page.tsx
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import AnimatedSection from '../../components/AnimatedSection'; // Importe o AnimatedSection
+import AnimatedSection from '../../components/AnimatedSection';
+import { InformationCircleIcon } from '@heroicons/react/24/outline'; // Ícone para o aviso
 
 interface AlertInfo {
   id: number;
@@ -80,18 +81,25 @@ const AlertCard = ({ alert }: { alert: AlertInfo }) => {
   );
 };
 
+type NoticeStateType = 'hidden' | 'entering' | 'visible' | 'leaving';
+const NOTICE_VISIBLE_DURATION = 8000;
+const NOTICE_FADE_DURATION = 500; 
+
 export default function AlertasPage() {
   const [alerts, setAlerts] = useState<AlertInfo[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [noticeState, setNoticeState] = useState<NoticeStateType>('hidden');
 
   useEffect(() => {
     const fetchAlerts = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const apiKey = '1234';
-        const response = await fetch('http://localhost:8080/alertas', {
+        const apiKey = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234'; // Usando variável de ambiente
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+
+        const response = await fetch(`${apiBaseUrl}/alertas`, {
           method: 'GET',
           headers: { 'X-API-Key': apiKey }
         });
@@ -113,7 +121,7 @@ export default function AlertasPage() {
           throw new Error(errorMessage);
         }
         const data: AlertInfo[] = await response.json();
-        setAlerts(data.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())); // Ordena por mais recente
+        setAlerts(data.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
       } catch (e: any) {
         console.error("Falha ao buscar alertas:", e);
         setError(e.message || "Ocorreu um erro ao buscar os alertas.");
@@ -121,13 +129,42 @@ export default function AlertasPage() {
         setIsLoading(false);
       }
     };
+
     fetchAlerts();
+
+    const initialDelayTimer = setTimeout(() => {
+      setNoticeState('entering');
+    }, 300);
+
+    const visibilityTimer = setTimeout(() => {
+      setNoticeState('leaving');
+    }, 300 + NOTICE_VISIBLE_DURATION); 
+
+    return () => {
+      clearTimeout(initialDelayTimer);
+      clearTimeout(visibilityTimer);
+    };
   }, []);
+
+  useEffect(() => {
+    let transitionEndTimerId: NodeJS.Timeout;
+    if (noticeState === 'entering') {
+      const rafId = requestAnimationFrame(() => {
+        setNoticeState('visible');
+      });
+      return () => cancelAnimationFrame(rafId);
+    } else if (noticeState === 'leaving') {
+      transitionEndTimerId = setTimeout(() => {
+        setNoticeState('hidden'); 
+      }, NOTICE_FADE_DURATION);
+      return () => clearTimeout(transitionEndTimerId);
+    }
+  }, [noticeState]);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-10 md:py-12">
       <AnimatedSection animationType="fadeInUp" delay="duration-500">
-        <section className="text-center mb-10 md:mb-12">
+        <section className="text-center mb-8 md:mb-10"> {/* Reduzido mb */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--brand-header-bg)]">
             Alertas e Avisos Recentes
           </h1>
@@ -136,6 +173,22 @@ export default function AlertasPage() {
           </p>
         </section>
       </AnimatedSection>
+
+      {noticeState !== 'hidden' && (
+        <div
+          className={`
+            mb-6 p-3 bg-blue-50 border-l-4 border-[var(--brand-header-bg)] text-[var(--brand-header-bg)]/80 
+            rounded-md shadow-sm text-sm flex items-start
+            transition-opacity ease-in-out duration-${NOTICE_FADE_DURATION} 
+            ${noticeState === 'visible' ? 'opacity-100' : 'opacity-0'}
+          `}
+        >
+          <InformationCircleIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+          <span>
+            Estamos utilizando serviços de hospedagem gratuitos para nossa API. O carregamento inicial dos alertas pode levar alguns segundos. Agradecemos a sua paciência!
+          </span>
+        </div>
+      )}
 
       {isLoading && (
         <AnimatedSection animationType="fadeIn" delay="duration-300">

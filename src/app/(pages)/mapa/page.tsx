@@ -3,11 +3,12 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import MapDisplay from '../../components/MapDisplay';
-import AnimatedSection from '../../components/AnimatedSection'; // Importando AnimatedSection
+import AnimatedSection from '../../components/AnimatedSection';
 import { useJsApiLoader } from '@react-google-maps/api';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
-const API_BASE_URL = 'http://localhost:8080';
-const STATIC_API_KEY = '1234';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const STATIC_API_KEY = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
 
 type RiskLevel = 'alto' | 'medio' | 'baixo';
 type ReportStatus = 'novo' | 'verificado' | 'em_atendimento' | 'resolvido' | 'falso_positivo';
@@ -78,9 +79,7 @@ const eventTypeDisplayMap: { [key: string]: string } = {
 const formatEventType = (eventType: string): string => {
   if (!eventType) return "Tipo Desconhecido";
   const mappedName = eventTypeDisplayMap[eventType];
-  if (mappedName) {
-    return mappedName;
-  }
+  if (mappedName) { return mappedName; }
   const spaced = eventType.replace(/([A-Z])/g, ' $1').trim();
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase().replace(/\s+/g, ' ');
 };
@@ -89,9 +88,7 @@ const safeFormatDateTime = (isoString?: string): string => {
   if (!isoString) return 'Data não disponível';
   try {
     const date = new Date(isoString);
-    if (isNaN(date.getTime())) {
-      return 'Data inválida';
-    }
+    if (isNaN(date.getTime())) { return 'Data inválida'; }
     return date.toLocaleString('pt-BR', {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit'
@@ -101,6 +98,10 @@ const safeFormatDateTime = (isoString?: string): string => {
     return 'Erro na data';
   }
 };
+
+type NoticeStateType = 'hidden' | 'entering' | 'visible' | 'leaving';
+const NOTICE_VISIBLE_DURATION = 8000; // Aviso visível por 8 segundos
+const NOTICE_FADE_DURATION = 500;     // Duração da animação de fade (ms)
 
 export default function MapaPage() {
   const Maps_API_KEY = process.env.NEXT_PUBLIC_Maps_API_KEY;
@@ -118,6 +119,8 @@ export default function MapaPage() {
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
   const [isProcessingMapData, setIsProcessingMapData] = useState(false);
   const [geocoder, setGeocoder] = useState<google.maps.Geocoder | null>(null);
+  
+  const [noticeState, setNoticeState] = useState<NoticeStateType>('hidden');
 
   useEffect(() => {
     if (isLoaded && !loadError && !geocoder) {
@@ -159,9 +162,38 @@ export default function MapaPage() {
 
   useEffect(() => {
     setIsLoadingInitialData(true);
+    
+    const initialDelayTimer = setTimeout(() => { // Pequeno delay para o aviso aparecer
+      setNoticeState('entering');
+    }, 300);
+
+    const visibilityTimer = setTimeout(() => { // Começa a esconder após este tempo
+      setNoticeState('leaving');
+    }, 300 + NOTICE_VISIBLE_DURATION); 
+
     Promise.all([fetchPredefinedRiskAreas(), fetchCommunityReports()])
       .finally(() => setIsLoadingInitialData(false));
+    
+    return () => {
+      clearTimeout(initialDelayTimer);
+      clearTimeout(visibilityTimer);
+    };
   }, [fetchPredefinedRiskAreas, fetchCommunityReports]);
+
+  useEffect(() => {
+    let transitionEndTimerId: NodeJS.Timeout;
+    if (noticeState === 'entering') {
+      const rafId = requestAnimationFrame(() => { // Garante que o DOM tenha 'opacity-0' antes de mudar para 'opacity-100'
+        setNoticeState('visible');
+      });
+      return () => cancelAnimationFrame(rafId);
+    } else if (noticeState === 'leaving') {
+      transitionEndTimerId = setTimeout(() => {
+        setNoticeState('hidden'); 
+      }, NOTICE_FADE_DURATION); // Espera a animação de fade-out terminar
+      return () => clearTimeout(transitionEndTimerId);
+    }
+  }, [noticeState]);
 
   const transformApiMapaToDisplayZone = useCallback((area: ApiMapaArea): DisplayZone => {
     return {
@@ -201,14 +233,12 @@ export default function MapaPage() {
 
   useEffect(() => {
     if (isLoadingInitialData || !isLoaded || !geocoder) return;
-
     setIsProcessingMapData(true);
     const processDataForMap = async () => {
       let combinedZones: DisplayZone[] = predefinedRiskAreas.map(transformApiMapaToDisplayZone);
       const reportsToShowOnMap = communityReports.filter(report =>
         report.status && approvedReportStatusesForMap.includes(report.status)
       );
-
       if (reportsToShowOnMap.length > 0) {
         const geocodedReportPromises = reportsToShowOnMap.map(report => {
           return new Promise<DisplayZone | null>((resolve) => {
@@ -282,7 +312,7 @@ export default function MapaPage() {
   return (
     <div className="container mx-auto px-6 py-12">
       <AnimatedSection animationType="fadeInUp" delay="duration-500">
-        <section className="text-center mb-12">
+        <section className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-[var(--brand-header-bg)]">
             Mapa Interativo de Riscos
           </h1>
@@ -292,7 +322,23 @@ export default function MapaPage() {
         </section>
       </AnimatedSection>
 
-      {(isLoadingInitialData || isProcessingMapData || !isLoaded) && 
+      {noticeState !== 'hidden' && (
+        <div
+          className={`
+            mb-6 p-3 bg-blue-50 border-l-4 border-[var(--brand-header-bg)] text-[var(--brand-header-bg)]/80 
+            rounded-md shadow-sm text-sm flex items-start
+            transition-opacity ease-in-out duration-${NOTICE_FADE_DURATION} 
+            ${noticeState === 'visible' ? 'opacity-100' : 'opacity-0'}
+          `}
+        >
+          <InformationCircleIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+          <span>
+            Estamos utilizando serviços de hospedagem gratuitos para nossa API. O carregamento inicial dos dados do mapa pode levar alguns segundos. Agradecemos a sua paciência!
+          </span>
+        </div>
+      )}
+
+      {(isLoadingInitialData || isProcessingMapData || !isLoaded) && !loadError &&
         <AnimatedSection animationType="fadeIn" delay="duration-300">
           <div className="text-center my-8">
             <p className="text-lg text-[var(--brand-text-secondary)]">Carregando dados do mapa...</p>
@@ -323,7 +369,7 @@ export default function MapaPage() {
             staggerChildren
             childDelayIncrement={100}
             animationType="fadeInUp"
-            delay="duration-500"
+            delay={`duration-${NOTICE_FADE_DURATION}`} // Usando a constante para a duração
             threshold={0.1}
         >
           <div className="bg-[var(--brand-card-background)] p-6 rounded-lg shadow-[var(--shadow-subtle)]">
