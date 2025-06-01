@@ -1,6 +1,8 @@
+// src/app/alertas/page.tsx (ou caminho similar)
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import AnimatedSection from '../../components/AnimatedSection'; // Importe o AnimatedSection
 
 interface AlertInfo {
   id: number;
@@ -63,7 +65,6 @@ const AlertCard = ({ alert }: { alert: AlertInfo }) => {
     borderColor = 'border-[var(--alert-blue)]/50 dark:border-[var(--alert-blue)]';
   }
 
-
   return (
     <div className={`p-5 md:p-6 rounded-lg shadow-[var(--shadow-subtle)] border-l-4 ${borderColor} ${bgColor}`}>
       <div className="flex justify-between items-start mb-2">
@@ -90,12 +91,9 @@ export default function AlertasPage() {
       setError(null);
       try {
         const apiKey = '1234';
-
         const response = await fetch('http://localhost:8080/alertas', {
           method: 'GET',
-          headers: {
-            'X-API-Key': apiKey
-          }
+          headers: { 'X-API-Key': apiKey }
         });
 
         if (!response.ok) {
@@ -105,17 +103,17 @@ export default function AlertasPage() {
             if (errorData && errorData.entity) {
               errorMessage = `${errorMessage} - ${errorData.entity}`;
             } else if (typeof errorData === 'string' && errorData.length > 0) {
-                errorMessage = `${errorMessage} - ${errorData}`;
+              errorMessage = `${errorMessage} - ${errorData}`;
             } else if (response.statusText) {
-                errorMessage = `${errorMessage} - ${response.statusText}`;
+              errorMessage = `${errorMessage} - ${response.statusText}`;
             }
           } catch (e) {
-            // Falha ao parsear corpo do erro.
+            // Falha ao parsear
           }
           throw new Error(errorMessage);
         }
         const data: AlertInfo[] = await response.json();
-        setAlerts(data);
+        setAlerts(data.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())); // Ordena por mais recente
       } catch (e: any) {
         console.error("Falha ao buscar alertas:", e);
         setError(e.message || "Ocorreu um erro ao buscar os alertas.");
@@ -123,44 +121,58 @@ export default function AlertasPage() {
         setIsLoading(false);
       }
     };
-
     fetchAlerts();
   }, []);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-10 md:py-12">
-      <section className="text-center mb-10 md:mb-12">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--brand-header-bg)]">
-          Alertas e Avisos Recentes
-        </h1>
-        <p className="text-lg text-[var(--brand-text-secondary)] mt-4 max-w-xl mx-auto">
-          Mantenha-se informado sobre os últimos acontecimentos e recomendações.
-        </p>
-      </section>
+      <AnimatedSection animationType="fadeInUp" delay="duration-500">
+        <section className="text-center mb-10 md:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--brand-header-bg)]">
+            Alertas e Avisos Recentes
+          </h1>
+          <p className="text-lg text-[var(--brand-text-secondary)] mt-4 max-w-xl mx-auto">
+            Mantenha-se informado sobre os últimos acontecimentos e recomendações.
+          </p>
+        </section>
+      </AnimatedSection>
 
       {isLoading && (
-        <div className="text-center py-10">
-          <p className="text-xl text-[var(--brand-text-secondary)]">Carregando alertas...</p>
-        </div>
+        <AnimatedSection animationType="fadeIn" delay="duration-300">
+          <div className="text-center py-10">
+            <p className="text-xl text-[var(--brand-text-secondary)]">Carregando alertas...</p>
+          </div>
+        </AnimatedSection>
       )}
 
       {error && (
-        <div className="text-center py-10 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">Erro!</strong>
-          <span className="block sm:inline"> {error}</span>
-        </div>
+        <AnimatedSection animationType="fadeIn" delay="duration-300">
+          <div className="text-center py-10 bg-red-100 border border-red-400 text-red-700 px-4 rounded relative" role="alert">
+            <strong className="font-bold">Erro!</strong>
+            <span className="block sm:inline"> {error}</span>
+          </div>
+        </AnimatedSection>
       )}
 
       {!isLoading && !error && alerts.length > 0 && (
-        <div className="space-y-6">
+        <AnimatedSection
+          className="space-y-6"
+          staggerChildren
+          childDelayIncrement={75}
+          animationType="fadeInUp"
+          delay="duration-300"
+          threshold={0.05}
+        >
           {alerts.map(alert => <AlertCard key={alert.id} alert={alert} />)}
-        </div>
+        </AnimatedSection>
       )}
 
       {!isLoading && !error && alerts.length === 0 && (
-        <div className="text-center py-10">
-          <p className="text-xl text-[var(--brand-text-secondary)]">Nenhum alerta no momento.</p>
-        </div>
+        <AnimatedSection animationType="fadeIn" delay="duration-300">
+          <div className="text-center py-10">
+            <p className="text-xl text-[var(--brand-text-secondary)]">Nenhum alerta no momento.</p>
+          </div>
+        </AnimatedSection>
       )}
     </div>
   );

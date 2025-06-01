@@ -1,7 +1,9 @@
+// src/app/abrigos/page.tsx (ou caminho similar)
 "use client";
 
 import React, { useEffect, useState } from 'react';
 import ShelterCard from '../../components/ShelterCard';
+import AnimatedSection from '../../components/AnimatedSection';
 
 interface ShelterInfo {
   id: number;
@@ -31,13 +33,10 @@ export default function AbrigosPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const apiKey = '1234'; 
-
+        const apiKey = '1234';
         const response = await fetch('http://localhost:8080/abrigos', {
           method: 'GET',
-          headers: {
-            'X-API-Key': apiKey
-          }
+          headers: { 'X-API-Key': apiKey }
         });
 
         if (!response.ok) {
@@ -49,12 +48,12 @@ export default function AbrigosPage() {
             } else if (typeof errorData === 'string' && errorData.length > 0) {
               errorMessage += ` - ${errorData}`;
             } else if (response.statusText) {
-                errorMessage = `HTTP error! status: ${response.status} - ${response.statusText}`;
+               errorMessage = `HTTP error! status: ${response.status} - ${response.statusText}`;
             } else {
-                errorMessage = `HTTP error! status: ${response.status}`;
+               errorMessage = `HTTP error! status: ${response.status}`;
             }
           } catch (e) {
-             // Falha ao parsear corpo do erro, usa a mensagem padrão.
+            // Falha ao parsear
           }
           throw new Error(errorMessage);
         }
@@ -67,48 +66,62 @@ export default function AbrigosPage() {
         setIsLoading(false);
       }
     };
-
     fetchShelters();
   }, []);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-10 md:py-12">
-      <section className="text-center mb-10 md:mb-12">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--brand-header-bg)]">
-          Abrigos e Pontos de Apoio em São Paulo
-        </h1>
-        <p className="text-lg text-[var(--brand-text-secondary)] mt-4 max-w-2xl mx-auto">
-          Quando abrigos temporários para desastres naturais não estiverem disponíveis, preencheremos com centros de acolhimentos convencionais.
-        </p>
-      </section>
+      <AnimatedSection animationType="fadeInUp" delay="duration-500">
+        <section className="text-center mb-10 md:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--brand-header-bg)]">
+            Abrigos e Pontos de Apoio em São Paulo
+          </h1>
+          <p className="text-lg text-[var(--brand-text-secondary)] mt-4 max-w-2xl mx-auto">
+            Quando abrigos temporários para desastres naturais não estiverem disponíveis, preencheremos com centros de acolhimentos convencionais.
+          </p>
+        </section>
+      </AnimatedSection>
 
       {isLoading && (
-        <div className="text-center py-10">
-          <p className="text-xl text-[var(--brand-text-secondary)]">Carregando abrigos...</p>
-        </div>
+        <AnimatedSection animationType="fadeIn" delay="duration-300">
+          <div className="text-center py-10">
+            <p className="text-xl text-[var(--brand-text-secondary)]">Carregando abrigos...</p>
+          </div>
+        </AnimatedSection>
       )}
 
       {error && (
-        <div className="text-center py-10 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">Erro!</strong>
-          <span className="block sm:inline"> {error}</span>
-        </div>
+        <AnimatedSection animationType="fadeIn" delay="duration-300">
+          <div className="text-center py-10 bg-red-100 border border-red-400 text-red-700 px-4 rounded relative" role="alert">
+            <strong className="font-bold">Erro!</strong>
+            <span className="block sm:inline"> {error}</span>
+          </div>
+        </AnimatedSection>
       )}
 
       {!isLoading && !error && sheltersToDisplay.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <AnimatedSection
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+          staggerChildren
+          childDelayIncrement={150}   // AUMENTADO: Atraso entre cada card
+          animationType="fadeInUp"
+          delay="duration-500"      // AUMENTADO: Duração da animação de cada card
+          threshold={0.1}           // AUMENTADO LEVEMENTE: Para o container da grade
+        >
           {sheltersToDisplay.map((shelter) => (
             <ShelterCard key={shelter.id} shelter={shelter} />
           ))}
-        </div>
+        </AnimatedSection>
       )}
 
       {!isLoading && !error && sheltersToDisplay.length === 0 && (
-        <div className="text-center py-10">
-          <p className="text-xl text-[var(--brand-text-secondary)]">
-            Nenhum abrigo disponível no momento.
-          </p>
-        </div>
+        <AnimatedSection animationType="fadeIn" delay="duration-300">
+          <div className="text-center py-10">
+            <p className="text-xl text-[var(--brand-text-secondary)]">
+              Nenhum abrigo disponível no momento.
+            </p>
+          </div>
+        </AnimatedSection>
       )}
     </div>
   );

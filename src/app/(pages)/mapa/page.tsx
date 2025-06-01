@@ -1,11 +1,13 @@
+// src/app/mapa/page.tsx
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import MapDisplay from '../../components/MapDisplay';
+import AnimatedSection from '../../components/AnimatedSection'; // Importando AnimatedSection
 import { useJsApiLoader } from '@react-google-maps/api';
 
 const API_BASE_URL = 'http://localhost:8080';
-const STATIC_API_KEY = '1234'; 
+const STATIC_API_KEY = '1234';
 
 type RiskLevel = 'alto' | 'medio' | 'baixo';
 type ReportStatus = 'novo' | 'verificado' | 'em_atendimento' | 'resolvido' | 'falso_positivo';
@@ -32,8 +34,8 @@ interface ApiReport {
   reporterName?: string;
   userId?: number;
   imageUrl?: string;
-  createdAt: string; 
-  status: ReportStatus; 
+  createdAt: string;
+  status: ReportStatus;
   severity?: ReportSeverity;
   latitude?: number;
   longitude?: number;
@@ -47,9 +49,9 @@ interface DisplayZone {
   title: string;
   description: string;
   reason?: string;
-  lastUpdated?: string; 
+  lastUpdated?: string;
   type: 'predefined' | 'report';
-  originalReport?: ApiReport; 
+  originalReport?: ApiReport;
 }
 
 const saoPauloCenter = { lat: -23.55052, lng: -46.633308 };
@@ -104,9 +106,9 @@ export default function MapaPage() {
   const Maps_API_KEY = process.env.NEXT_PUBLIC_Maps_API_KEY;
 
   const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script', 
-    googleMapsApiKey: Maps_API_KEY!, 
-    libraries: googleMapsLibraries, 
+    id: 'google-map-script',
+    googleMapsApiKey: Maps_API_KEY!,
+    libraries: googleMapsLibraries,
   });
 
   const [filterRiskLevel, setFilterRiskLevel] = useState<RiskLevel | 'all'>('all');
@@ -148,7 +150,7 @@ export default function MapaPage() {
       });
       if (!response.ok) throw new Error('Falha ao buscar reportes da comunidade');
       const data: ApiReport[] = await response.json();
-      setCommunityReports(data); 
+      setCommunityReports(data);
     } catch (error) {
       console.error("Erro buscando reportes da comunidade:", error);
       setCommunityReports([]);
@@ -178,27 +180,17 @@ export default function MapaPage() {
   const transformApiReportToDisplayZone = useCallback((report: ApiReport, coords: google.maps.LatLngLiteral): DisplayZone => {
     let reportDisplayRiskLevel: RiskLevel;
     switch (report.severity) {
-      case 'alta':
-        reportDisplayRiskLevel = 'alto';
-        break;
-      case 'media':
-        reportDisplayRiskLevel = 'medio';
-        break;
-      case 'baixa':
-        reportDisplayRiskLevel = 'baixo';
-        break;
-      case 'nao_definida':
-      default:
-        reportDisplayRiskLevel = 'baixo'; 
-        break;
+      case 'alta': reportDisplayRiskLevel = 'alto'; break;
+      case 'media': reportDisplayRiskLevel = 'medio'; break;
+      case 'baixa': reportDisplayRiskLevel = 'baixo'; break;
+      case 'nao_definida': default: reportDisplayRiskLevel = 'baixo'; break;
     }
-    
     return {
       id: `report-${report.id}`,
       center: coords,
-      radius: 1000, 
+      radius: 1000,
       riskLevel: reportDisplayRiskLevel,
-      title: formatEventType(report.eventType), // Usa a função formatEventType
+      title: formatEventType(report.eventType),
       description: report.description,
       reason: `Reportado por: ${report.reporterName || 'Anônimo'}`,
       lastUpdated: safeFormatDateTime(report.createdAt),
@@ -208,12 +200,11 @@ export default function MapaPage() {
   }, []);
 
   useEffect(() => {
-    if (isLoadingInitialData || !isLoaded || !geocoder) return; 
+    if (isLoadingInitialData || !isLoaded || !geocoder) return;
 
     setIsProcessingMapData(true);
     const processDataForMap = async () => {
       let combinedZones: DisplayZone[] = predefinedRiskAreas.map(transformApiMapaToDisplayZone);
-      
       const reportsToShowOnMap = communityReports.filter(report =>
         report.status && approvedReportStatusesForMap.includes(report.status)
       );
@@ -238,22 +229,18 @@ export default function MapaPage() {
             }
           });
         });
-
         try {
-            const geocodedReports = (await Promise.all(geocodedReportPromises)).filter(zone => zone !== null) as DisplayZone[];
-            combinedZones = [...combinedZones, ...geocodedReports];
+          const geocodedReports = (await Promise.all(geocodedReportPromises)).filter(zone => zone !== null) as DisplayZone[];
+          combinedZones = [...combinedZones, ...geocodedReports];
         } catch (error) {
-            console.error("Erro durante o processamento de geocodificação em lote:", error);
+          console.error("Erro durante o processamento de geocodificação em lote:", error);
         }
       }
       setDisplayZones(combinedZones);
       setIsProcessingMapData(false);
     };
-
     processDataForMap();
-
   }, [predefinedRiskAreas, communityReports, geocoder, isLoaded, isLoadingInitialData, transformApiMapaToDisplayZone, transformApiReportToDisplayZone]);
-
 
   const filteredDisplayZones = useMemo(() => {
     if (filterRiskLevel === 'all') {
@@ -265,94 +252,116 @@ export default function MapaPage() {
   if (!Maps_API_KEY) {
     return (
       <div className="container mx-auto px-6 py-12">
-        <section className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold text-[var(--brand-header-bg)]">
-            Mapa Interativo de Riscos
-          </h1>
-        </section>
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md" role="alert">
-          <p className="font-bold">CONFIGURAÇÃO NECESSÁRIA</p>
-          <p>A chave da API do Google Maps não está configurada corretamente.</p>
-        </div>
+        <AnimatedSection animationType="fadeInUp" delay="duration-500">
+          <section className="text-center mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold text-[var(--brand-header-bg)]">
+              Mapa Interativo de Riscos
+            </h1>
+          </section>
+        </AnimatedSection>
+        <AnimatedSection animationType="fadeIn" delay="duration-700">
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md" role="alert">
+            <p className="font-bold">CONFIGURAÇÃO NECESSÁRIA</p>
+            <p>A chave da API do Google Maps não está configurada corretamente.</p>
+          </div>
+        </AnimatedSection>
       </div>
     )
   }
   
   if (loadError) {
-      return (
-        <div className="container mx-auto px-6 py-12 text-center">
-            <p className="text-red-600">Erro ao carregar a API do Google Maps. Verifique sua chave e conexão. Detalhes: {loadError.message}</p>
-        </div>
-      );
+    return (
+      <div className="container mx-auto px-6 py-12 text-center">
+        <AnimatedSection animationType="fadeIn" delay="duration-500">
+          <p className="text-red-600">Erro ao carregar a API do Google Maps. Verifique sua chave e conexão. Detalhes: {loadError.message}</p>
+        </AnimatedSection>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto px-6 py-12">
-      <section className="text-center mb-12">
-        <h1 className="text-3xl md:text-4xl font-bold text-[var(--brand-header-bg)]">
-          Mapa Interativo de Riscos
-        </h1>
-        <p className="text-lg text-[var(--brand-text-secondary)] mt-4 max-w-2xl mx-auto">
-          Acompanhe os eventos reportados pela comunidade e alertas oficiais diretamente no mapa.
-        </p>
-      </section>
+      <AnimatedSection animationType="fadeInUp" delay="duration-500">
+        <section className="text-center mb-12">
+          <h1 className="text-3xl md:text-4xl font-bold text-[var(--brand-header-bg)]">
+            Mapa Interativo de Riscos
+          </h1>
+          <p className="text-lg text-[var(--brand-text-secondary)] mt-4 max-w-2xl mx-auto">
+            Acompanhe os eventos reportados pela comunidade e alertas oficiais diretamente no mapa.
+          </p>
+        </section>
+      </AnimatedSection>
 
       {(isLoadingInitialData || isProcessingMapData || !isLoaded) && 
-        <div className="text-center my-8">
+        <AnimatedSection animationType="fadeIn" delay="duration-300">
+          <div className="text-center my-8">
             <p className="text-lg text-[var(--brand-text-secondary)]">Carregando dados do mapa...</p>
-        </div>
+          </div>
+        </AnimatedSection>
       }
 
       {isLoaded && !loadError && (
-        <section>
+        <AnimatedSection animationType="fadeIn" delay="duration-700" threshold={0.01}>
+          <section>
             <MapDisplay
               isLoaded={isLoaded} 
               loadError={loadError} 
               initialCenter={saoPauloCenter}
               riskAreasData={filteredDisplayZones} 
             />
-        </section>
+          </section>
+        </AnimatedSection>
       )}
 
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold text-[var(--brand-text-primary)] mb-6 text-center">Legenda e Filtros</h2>
-        <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-[var(--brand-card-background)] p-6 rounded-lg shadow-[var(--shadow-subtle)]">
-              <h3 className="text-xl font-medium text-[var(--brand-text-primary)] mb-3">Legenda</h3>
-              <ul className="space-y-2 text-[var(--brand-text-secondary)]">
-                {riskLevelColorsAndLabels.map(item => (
-                   <li key={item.level} className="flex items-center">
-                     <span style={{ backgroundColor: item.color, opacity: 0.7 }} className="inline-block w-4 h-4 rounded-full border border-black/20 mr-2"></span> 
-                     <span>Risco {item.label}</span>
-                   </li>
-                ))}
-              </ul>
+        <AnimatedSection animationType="fadeInUp" delay="duration-500">
+          <h2 className="text-2xl font-semibold text-[var(--brand-text-primary)] mb-6 text-center">Legenda e Filtros</h2>
+        </AnimatedSection>
+        
+        <AnimatedSection
+            className="grid md:grid-cols-2 gap-8"
+            staggerChildren
+            childDelayIncrement={100}
+            animationType="fadeInUp"
+            delay="duration-500"
+            threshold={0.1}
+        >
+          <div className="bg-[var(--brand-card-background)] p-6 rounded-lg shadow-[var(--shadow-subtle)]">
+            <h3 className="text-xl font-medium text-[var(--brand-text-primary)] mb-3">Legenda</h3>
+            <ul className="space-y-2 text-[var(--brand-text-secondary)]">
+              {riskLevelColorsAndLabels.map(item => (
+                  <li key={item.level} className="flex items-center">
+                    <span style={{ backgroundColor: item.color, opacity: 0.7 }} className="inline-block w-4 h-4 rounded-full border border-black/20 mr-2"></span> 
+                    <span>Risco {item.label}</span>
+                  </li>
+              ))}
+            </ul>
+          </div>
+          <div className="bg-[var(--brand-card-background)] p-6 rounded-lg shadow-[var(--shadow-subtle)]">
+            <h3 className="text-xl font-medium text-[var(--brand-text-primary)] mb-4">Filtros</h3>
+            <div className="space-y-4">
+                <div>
+                  <label htmlFor="filter-risk-level" className="block text-sm font-medium text-[var(--brand-text-secondary)] mb-1">
+                    Nível de Risco:
+                  </label>
+                  <select
+                    id="filter-risk-level"
+                    value={filterRiskLevel}
+                    onChange={(e) => setFilterRiskLevel(e.target.value as RiskLevel | 'all')}
+                    disabled={isLoadingInitialData || isProcessingMapData || !isLoaded}
+                    className="block w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-transparent outline-none bg-white text-[var(--brand-text-primary)] disabled:bg-slate-100"
+                  >
+                    <option value="all">Todos os Níveis</option>
+                    {riskLevelColorsAndLabels.map(item => (
+                      <option key={item.level} value={item.level}>
+                        {item.emoji} Risco {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
             </div>
-            <div className="bg-[var(--brand-card-background)] p-6 rounded-lg shadow-[var(--shadow-subtle)]">
-              <h3 className="text-xl font-medium text-[var(--brand-text-primary)] mb-4">Filtros</h3>
-              <div className="space-y-4">
-                  <div>
-                      <label htmlFor="filter-risk-level" className="block text-sm font-medium text-[var(--brand-text-secondary)] mb-1">
-                          Nível de Risco:
-                      </label>
-                      <select
-                          id="filter-risk-level"
-                          value={filterRiskLevel}
-                          onChange={(e) => setFilterRiskLevel(e.target.value as RiskLevel | 'all')}
-                          disabled={isLoadingInitialData || isProcessingMapData || !isLoaded}
-                          className="block w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-transparent outline-none bg-white text-[var(--brand-text-primary)] disabled:bg-slate-100"
-                      >
-                          <option value="all">Todos os Níveis</option>
-                          {riskLevelColorsAndLabels.map(item => (
-                            <option key={item.level} value={item.level}>
-                              {item.emoji} Risco {item.label}
-                            </option>
-                          ))}
-                      </select>
-                  </div>
-              </div>
-            </div>
-        </div>
+          </div>
+        </AnimatedSection>
       </section>
     </div>
   );

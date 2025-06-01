@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth, availableAlertTypes, AlertType } from '../../contexts/AuthContext';
+import AnimatedSection from './../../components/AnimatedSection'; // Verifique este caminho
 
 export default function RegistroPage() {
   const [name, setName] = useState('');
@@ -17,7 +18,6 @@ export default function RegistroPage() {
   const [successMessage, setSuccessMessage] = useState('');
   
   const router = useRouter();
-  // Se AuthProvider não estiver acima desta página, a linha abaixo causará um erro.
   const { register, login } = useAuth(); 
 
   const handleAlertSubscriptionChange = (alertType: AlertType) => {
@@ -66,7 +66,7 @@ export default function RegistroPage() {
         setTimeout(() => router.push('/'), 2000);
       } else {
         setError('Erro ao fazer login após o registro. Por favor, tente fazer login manualmente.');
-        setSuccessMessage(''); // Limpa msg de sucesso se login falhar
+        setSuccessMessage('');
         setTimeout(() => router.push('/login'), 3000);
       }
     } else {
@@ -76,28 +76,76 @@ export default function RegistroPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-16 flex justify-center items-center min-h-[calc(100vh-150px)]">
-      <div className="w-full max-w-lg bg-[var(--brand-card-background)] p-8 rounded-xl shadow-[var(--shadow-subtle)]">
+      <AnimatedSection
+        className="w-full max-w-lg bg-[var(--brand-card-background)] p-8 rounded-xl shadow-[var(--shadow-subtle)]"
+        animationType="fadeInUp"
+        delay="duration-300"
+        staggerChildren
+        childDelayIncrement={75}
+        threshold={0.1}
+      >
         <h1 className="text-3xl font-bold text-center text-[var(--brand-header-bg)] mb-8">
           Criar Conta no EchoReport
         </h1>
-        {error && <p className="mb-4 text-center text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
-        {successMessage && <p className="mb-4 text-center text-sm text-green-600 bg-green-100 p-3 rounded-md">{successMessage}</p>}
+
+        {error && (
+          <p className="mb-4 text-center text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>
+        )}
+        {successMessage && (
+          <p className="mb-4 text-center text-sm text-green-600 bg-green-100 p-3 rounded-md">{successMessage}</p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Nome Completo</label>
-            <input id="name" name="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm"/>
+            <input 
+              id="name" 
+              name="name" 
+              type="text" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              required 
+              className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm bg-white text-[var(--brand-text-primary)]"
+            />
           </div>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Email</label>
-            <input id="email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm"/>
+            <input 
+              id="email" 
+              name="email" 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              autoComplete="email" 
+              required 
+              className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm bg-white text-[var(--brand-text-primary)]"
+            />
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Senha</label>
-            <input id="password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" required className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm"/>
+            <input 
+              id="password" 
+              name="password" 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              autoComplete="new-password" 
+              required 
+              className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm bg-white text-[var(--brand-text-primary)]"
+            />
           </div>
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Confirmar Senha</label>
-            <input id="confirmPassword" name="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm"/>
+            <input 
+              id="confirmPassword" 
+              name="confirmPassword" 
+              type="password" 
+              value={confirmPassword} 
+              onChange={(e) => setConfirmPassword(e.target.value)} 
+              autoComplete="new-password" 
+              required 
+              className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm bg-white text-[var(--brand-text-primary)]"
+            />
           </div>
 
           <div>
@@ -111,7 +159,7 @@ export default function RegistroPage() {
               value={locationPreference}
               onChange={(e) => setLocationPreference(e.target.value)}
               placeholder="Ex: Vila Madalena, São Paulo"
-              className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm"
+              className="mt-1 block w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm bg-white text-[var(--brand-text-primary)]"
             />
           </div>
 
@@ -121,12 +169,12 @@ export default function RegistroPage() {
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
               {availableAlertTypes.map((alertType) => (
-                <label key={alertType} className="flex items-center space-x-2 cursor-pointer">
+                <label key={alertType} className="flex items-center space-x-2 cursor-pointer p-1 hover:bg-[var(--brand-header-bg)]/5 rounded-md">
                   <input
                     type="checkbox"
                     checked={subscribedAlerts.includes(alertType)}
                     onChange={() => handleAlertSubscriptionChange(alertType)}
-                    className="h-4 w-4 text-[var(--brand-header-bg)] border-gray-300 rounded focus:ring-[var(--brand-header-bg)]"
+                    className="h-4 w-4 text-[var(--brand-header-bg)] border-gray-300 rounded focus:ring-[var(--brand-header-bg)] bg-white"
                   />
                   <span className="text-sm text-[var(--brand-text-secondary)]">{alertType}</span>
                 </label>
@@ -137,19 +185,20 @@ export default function RegistroPage() {
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-[var(--brand-text-header)] bg-[var(--brand-header-bg)] hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--brand-header-bg)]"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-[var(--brand-text-header)] bg-[var(--brand-header-bg)] hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--brand-card-background)] focus:ring-[var(--brand-header-bg)]"
             >
               Registrar
             </button>
           </div>
         </form>
+
         <p className="mt-8 text-center text-sm text-[var(--brand-text-secondary)]">
           Já tem uma conta?{' '}
           <Link href="/login" className="font-medium text-[var(--brand-header-bg)] hover:text-opacity-80">
             Faça login
           </Link>
         </p>
-      </div>
+      </AnimatedSection>
     </div>
   );
 }

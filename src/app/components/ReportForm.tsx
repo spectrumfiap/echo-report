@@ -1,8 +1,10 @@
+// src/components/ReportForm.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from './../contexts/AuthContext';
+import { useAuth } from './../contexts/AuthContext'; // Assumindo que AuthContext está um nível acima
 import { useRouter } from 'next/navigation';
+import AnimatedSection from './AnimatedSection'; // Assumindo que AnimatedSection está na mesma pasta 'components'
 
 const ReportForm: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -48,16 +50,11 @@ const ReportForm: React.FC = () => {
       setSubmitStatus({ type: 'error', message: "Localização e Descrição são campos obrigatórios." });
       return;
     }
-    // REMOVIDA A VALIDAÇÃO QUE OBRIGAVA O NOME PARA NÃO LOGADOS
-    // if (!isAuthenticated && !reporterName.trim()) {
-    //   setSubmitStatus({ type: 'error', message: "Por favor, informe seu nome para o reporte ou faça login." });
-    //   return;
-    // }
-
+    
     setIsSubmitting(true);
 
     const formDataForSubmission = new FormData();
-    formDataForSubmission.append('reporterName', reporterName.trim() || "Anônimo"); // Usa .trim() e depois fallback para "Anônimo"
+    formDataForSubmission.append('reporterName', reporterName.trim() || "Anônimo");
     formDataForSubmission.append('eventType', eventType);
     formDataForSubmission.append('description', description);
     formDataForSubmission.append('location', location);
@@ -65,7 +62,7 @@ const ReportForm: React.FC = () => {
       formDataForSubmission.append('image', selectedFile, selectedFile.name);
     }
     if (isAuthenticated && user && user.id) {
-      if (user.id !== 'admin_id_special') {
+      if (user.id !== 'admin_id_special') { // Exemplo de condição, ajuste conforme necessário
         formDataForSubmission.append('userId', String(user.id));
       }
     }
@@ -74,9 +71,7 @@ const ReportForm: React.FC = () => {
       const apiKey = '1234';
       const response = await fetch('http://localhost:8080/reportes', {
         method: 'POST',
-        headers: {
-          'X-API-Key': apiKey,
-        },
+        headers: { 'X-API-Key': apiKey, },
         body: formDataForSubmission,
       });
 
@@ -88,8 +83,8 @@ const ReportForm: React.FC = () => {
                 const errorData = await response.json();
                 if (errorData) {
                     backendErrorMessage = errorData.message || errorData.title || errorData.detail || 
-                                         (errorData.violations && errorData.violations[0]?.message) || 
-                                         (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
+                                          (errorData.violations && errorData.violations[0]?.message) || 
+                                          (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
                 }
             } else {
                 const errorText = await response.text();
@@ -98,7 +93,7 @@ const ReportForm: React.FC = () => {
                 }
             }
         } catch (e) {
-            // Não conseguiu ler o corpo do erro
+          // não conseguiu ler
         }
         throw new Error(backendErrorMessage);
       }
@@ -118,114 +113,125 @@ const ReportForm: React.FC = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 bg-[var(--brand-card-background)] p-6 md:p-8 rounded-lg shadow-[var(--shadow-subtle)] max-w-2xl mx-auto"
+      className="bg-[var(--brand-card-background)] p-6 md:p-8 rounded-lg shadow-[var(--shadow-subtle)] max-w-2xl mx-auto"
     >
       {submitStatus && submitStatus.type === 'error' && (
-        <div
-          className={`p-4 mb-4 text-sm rounded-lg bg-red-100 text-red-700`}
-          role="alert"
-        >
-          {submitStatus.message}
-        </div>
+        <AnimatedSection animationType="fadeIn" delay="duration-300">
+          <div
+            className={`p-4 mb-6 text-sm rounded-lg bg-red-100 text-red-700`} // mb-6 adicionado para espaçar do primeiro campo
+            role="alert"
+          >
+            {submitStatus.message}
+          </div>
+        </AnimatedSection>
       )}
 
-      <div>
-        <label htmlFor="reporterName" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
-          Seu Nome {isAuthenticated ? '(Automático)' : '(Opcional)'}
-        </label>
-        <input
-          type="text"
-          name="reporterName"
-          id="reporterName"
-          value={reporterName}
-          onChange={(e) => setReporterName(e.target.value)}
-          className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors disabled:bg-slate-100 disabled:text-slate-500"
-          placeholder={isAuthenticated ? "Nome preenchido automaticamente" : "Seu nome (ou deixe em branco para anônimo)"}
-          disabled={isAuthenticated}
-        />
-        {!isAuthenticated && <p className="mt-1 text-xs text-[var(--brand-text-secondary)]">Faça login para preencher seu nome automaticamente ou reporte anonimamente.</p>}
-      </div>
-
-      <div>
-        <label htmlFor="eventType" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
-          Tipo de Evento
-        </label>
-        <select
-          id="eventType"
-          name="eventType"
-          value={eventType}
-          onChange={(e) => setEventType(e.target.value)}
-          className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors"
-        >
-          <option value="Alagamento">Alagamento</option>
-          <option value="QuedaDeArvore">Queda de Árvore</option>
-          <option value="FaltaDeEnergia">Falta de Energia</option>
-          <option value="AglomeracaoAbrigo">Aglomeração em Abrigo</option>
-          <option value="VazamentoGas">Vazamento de Gás</option>
-          <option value="Deslizamento">Deslizamento de Terra</option>
-          <option value="Outro">Outro</option>
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="location" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
-          Localização (Endereço ou Ponto de Referência) <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          name="location"
-          id="location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors"
-          placeholder="Ex: Rua das Palmeiras, próximo ao nº 100"
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
-          Descrição Detalhada <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={5}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors"
-          placeholder="Descreva o que você viu, o nível de severidade, pessoas em risco, etc."
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="imageUpload" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
-          Foto da Ocorrência (Opcional)
-        </label>
-        <input
-          type="file"
-          name="imageUpload"
-          id="imageUpload"
-          accept="image/png, image/jpeg, image/gif"
-          onChange={handleFileChange}
-          className="mt-1 block w-full text-sm text-[var(--brand-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[var(--brand-header-bg)]/10 file:text-[var(--brand-header-bg)] hover:file:bg-[var(--brand-header-bg)]/20 cursor-pointer"
-        />
-        {previewUrl && selectedFile && (
-          <div className="mt-4">
-            <p className="text-sm text-[var(--brand-text-secondary)]">Preview:</p>
-            <img src={previewUrl} alt={selectedFile.name} className="mt-2 rounded-md max-h-48 border border-gray-300" />
-          </div>
-        )}
-      </div>
-
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-opacity-80 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      <AnimatedSection 
+        className="space-y-6" 
+        staggerChildren 
+        childDelayIncrement={75} 
+        animationType="fadeInUp" 
+        delay="duration-300"
+        threshold={0.05}
       >
-        {isSubmitting ? 'Enviando...' : 'Enviar Reporte'}
-      </button>
+        <div>
+          <label htmlFor="reporterName" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
+            Seu Nome {isAuthenticated ? '(Automático)' : '(Opcional)'}
+          </label>
+          <input
+            type="text"
+            name="reporterName"
+            id="reporterName"
+            value={reporterName}
+            onChange={(e) => setReporterName(e.target.value)}
+            className="mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors disabled:bg-slate-100 dark:disabled:bg-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 bg-white"
+            placeholder={isAuthenticated ? "Nome preenchido automaticamente" : "Seu nome (ou deixe em branco para anônimo)"}
+            disabled={isAuthenticated}
+          />
+          {!isAuthenticated && <p className="mt-1 text-xs text-[var(--brand-text-secondary)]">Faça login para preencher seu nome automaticamente ou reporte anonimamente.</p>}
+        </div>
+
+        <div>
+          <label htmlFor="eventType" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
+            Tipo de Evento
+          </label>
+          <select
+            id="eventType"
+            name="eventType"
+            value={eventType}
+            onChange={(e) => setEventType(e.target.value)}
+            className="mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors bg-white"
+          >
+            <option value="Alagamento">Alagamento</option>
+            <option value="QuedaDeArvore">Queda de Árvore</option>
+            <option value="FaltaDeEnergia">Falta de Energia</option>
+            <option value="AglomeracaoAbrigo">Aglomeração em Abrigo</option>
+            <option value="VazamentoGas">Vazamento de Gás</option>
+            <option value="Deslizamento">Deslizamento de Terra</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="location" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
+            Localização (Endereço ou Ponto de Referência) <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="location"
+            id="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            className="mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors bg-white"
+            placeholder="Ex: Rua das Palmeiras, próximo ao nº 100"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
+            Descrição Detalhada <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            rows={5}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors bg-white"
+            placeholder="Descreva o que você viu, o nível de severidade, pessoas em risco, etc."
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="imageUpload" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
+            Foto da Ocorrência (Opcional)
+          </label>
+          <input
+            type="file"
+            name="imageUpload"
+            id="imageUpload"
+            accept="image/png, image/jpeg, image/gif"
+            onChange={handleFileChange}
+            className="mt-1 block w-full text-sm text-[var(--brand-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[var(--brand-header-bg)]/10 file:text-[var(--brand-header-bg)] hover:file:bg-[var(--brand-header-bg)]/20 cursor-pointer"
+          />
+          {previewUrl && selectedFile && (
+            <div className="mt-4">
+              <p className="text-sm text-[var(--brand-text-secondary)]">Preview:</p>
+              <img src={previewUrl} alt={selectedFile.name} className="mt-2 rounded-md max-h-48 border border-gray-300 dark:border-slate-600" />
+            </div>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-opacity-80 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'Enviando...' : 'Enviar Reporte'}
+        </button>
+      </AnimatedSection>
     </form>
   );
 };
