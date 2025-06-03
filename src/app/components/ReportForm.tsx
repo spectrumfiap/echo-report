@@ -2,9 +2,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from './../contexts/AuthContext'; // Assumindo que AuthContext está um nível acima
+import { useAuth } from './../contexts/AuthContext'; // Ajuste se o caminho for diferente
 import { useRouter } from 'next/navigation';
-import AnimatedSection from './AnimatedSection'; // Assumindo que AnimatedSection está na mesma pasta 'components'
+import AnimatedSection from './AnimatedSection'; // Ajuste se o caminho for diferente
 
 const ReportForm: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -62,16 +62,17 @@ const ReportForm: React.FC = () => {
       formDataForSubmission.append('image', selectedFile, selectedFile.name);
     }
     if (isAuthenticated && user && user.id) {
-      if (user.id !== 'admin_id_special') { // Exemplo de condição, ajuste conforme necessário
-        formDataForSubmission.append('userId', String(user.id));
-      }
+      // Removido: if (user.id !== 'admin_id_special') { ... } para sempre enviar userId se logado. Ajuste se necessário.
+      formDataForSubmission.append('userId', String(user.id));
     }
 
     try {
-      const apiKey = '1234';
-      const response = await fetch('http://localhost:8080/reportes', {
+      const apiKey = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234'; // Usar env var
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'; // Usar env var
+
+      const response = await fetch(`${apiBaseUrl}/reportes`, {
         method: 'POST',
-        headers: { 'X-API-Key': apiKey, },
+        headers: { 'X-API-Key': apiKey },
         body: formDataForSubmission,
       });
 
@@ -83,22 +84,18 @@ const ReportForm: React.FC = () => {
                 const errorData = await response.json();
                 if (errorData) {
                     backendErrorMessage = errorData.message || errorData.title || errorData.detail || 
-                                          (errorData.violations && errorData.violations[0]?.message) || 
-                                          (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
+                                        (errorData.violations && errorData.violations[0]?.message) || 
+                                        (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
                 }
             } else {
                 const errorText = await response.text();
-                if (errorText) {
-                    backendErrorMessage = errorText; 
-                }
+                if (errorText) { backendErrorMessage = errorText; }
             }
-        } catch (e) {
-          // não conseguiu ler
-        }
+        } catch (e) { /* não conseguiu ler o corpo do erro */ }
         throw new Error(backendErrorMessage);
       }
 
-      const result = await response.json();
+      // const result = await response.json(); // Descomente se precisar do resultado
       alert(`Reporte enviado com sucesso! Você será redirecionado para a página inicial.`);
       router.push('/');
 
@@ -110,6 +107,11 @@ const ReportForm: React.FC = () => {
     }
   };
 
+  const inputBaseClasses = "mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] dark:focus:ring-blue-500 focus:border-[var(--brand-header-bg)] dark:focus:border-blue-500 sm:text-sm transition-colors";
+  const inputBgTextClasses = "bg-[var(--brand-input-background)] text-[var(--brand-text-primary)] placeholder:text-slate-400 dark:placeholder:text-slate-500";
+  const disabledClasses = "disabled:bg-slate-100 dark:disabled:bg-slate-700/50 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed";
+
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -118,7 +120,7 @@ const ReportForm: React.FC = () => {
       {submitStatus && submitStatus.type === 'error' && (
         <AnimatedSection animationType="fadeIn" delay="duration-300">
           <div
-            className={`p-4 mb-6 text-sm rounded-lg bg-red-100 text-red-700`} // mb-6 adicionado para espaçar do primeiro campo
+            className={`p-4 mb-6 text-sm rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700`}
             role="alert"
           >
             {submitStatus.message}
@@ -144,7 +146,7 @@ const ReportForm: React.FC = () => {
             id="reporterName"
             value={reporterName}
             onChange={(e) => setReporterName(e.target.value)}
-            className="mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors disabled:bg-slate-100 dark:disabled:bg-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 bg-white"
+            className={`${inputBaseClasses} ${inputBgTextClasses} ${disabledClasses}`}
             placeholder={isAuthenticated ? "Nome preenchido automaticamente" : "Seu nome (ou deixe em branco para anônimo)"}
             disabled={isAuthenticated}
           />
@@ -160,21 +162,22 @@ const ReportForm: React.FC = () => {
             name="eventType"
             value={eventType}
             onChange={(e) => setEventType(e.target.value)}
-            className="mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors bg-white"
+            className={`${inputBaseClasses} ${inputBgTextClasses} appearance-none`} // appearance-none para melhor controle de estilo se necessário
           >
-            <option value="Alagamento">Alagamento</option>
-            <option value="QuedaDeArvore">Queda de Árvore</option>
-            <option value="FaltaDeEnergia">Falta de Energia</option>
-            <option value="AglomeracaoAbrigo">Aglomeração em Abrigo</option>
-            <option value="VazamentoGas">Vazamento de Gás</option>
-            <option value="Deslizamento">Deslizamento de Terra</option>
-            <option value="Outro">Outro</option>
+            {/* Adicionando classes para options para tentar controlar cor do texto no dark mode */}
+            <option value="Alagamento" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Alagamento</option>
+            <option value="QuedaDeArvore" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Queda de Árvore</option>
+            <option value="FaltaDeEnergia" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Falta de Energia</option>
+            <option value="AglomeracaoAbrigo" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Aglomeração em Abrigo</option>
+            <option value="VazamentoGas" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Vazamento de Gás</option>
+            <option value="Deslizamento" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Deslizamento de Terra</option>
+            <option value="Outro" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Outro</option>
           </select>
         </div>
 
         <div>
           <label htmlFor="location" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
-            Localização (Endereço ou Ponto de Referência) <span className="text-red-500">*</span>
+            Localização (Endereço ou Ponto de Referência) <span className="text-red-500 dark:text-red-400">*</span>
           </label>
           <input
             type="text"
@@ -182,7 +185,7 @@ const ReportForm: React.FC = () => {
             id="location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors bg-white"
+            className={`${inputBaseClasses} ${inputBgTextClasses}`}
             placeholder="Ex: Rua das Palmeiras, próximo ao nº 100"
             required
           />
@@ -190,7 +193,7 @@ const ReportForm: React.FC = () => {
 
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-[var(--brand-text-primary)] mb-1">
-            Descrição Detalhada <span className="text-red-500">*</span>
+            Descrição Detalhada <span className="text-red-500 dark:text-red-400">*</span>
           </label>
           <textarea
             id="description"
@@ -198,7 +201,7 @@ const ReportForm: React.FC = () => {
             rows={5}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:border-[var(--brand-header-bg)] sm:text-sm transition-colors bg-white"
+            className={`${inputBaseClasses} ${inputBgTextClasses}`}
             placeholder="Descreva o que você viu, o nível de severidade, pessoas em risco, etc."
             required
           />
@@ -214,7 +217,12 @@ const ReportForm: React.FC = () => {
             id="imageUpload"
             accept="image/png, image/jpeg, image/gif"
             onChange={handleFileChange}
-            className="mt-1 block w-full text-sm text-[var(--brand-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[var(--brand-header-bg)]/10 file:text-[var(--brand-header-bg)] hover:file:bg-[var(--brand-header-bg)]/20 cursor-pointer"
+            className="mt-1 block w-full text-sm text-[var(--brand-text-secondary)] 
+                       file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold 
+                       file:bg-[var(--brand-header-bg)]/20 file:text-[var(--brand-header-bg)] 
+                       dark:file:bg-[var(--brand-header-bg)]/30 dark:file:text-blue-300 
+                       hover:file:bg-[var(--brand-header-bg)]/30 dark:hover:file:bg-[var(--brand-header-bg)]/40 
+                       cursor-pointer"
           />
           {previewUrl && selectedFile && (
             <div className="mt-4">
@@ -227,7 +235,7 @@ const ReportForm: React.FC = () => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-opacity-80 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-[var(--brand-header-bg)] dark:bg-blue-600 text-[var(--brand-text-header)] font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-opacity-80 dark:hover:bg-blue-500 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] dark:focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? 'Enviando...' : 'Enviar Reporte'}
         </button>

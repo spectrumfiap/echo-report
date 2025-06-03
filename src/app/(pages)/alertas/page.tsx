@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import AnimatedSection from '../../components/AnimatedSection';
-import { InformationCircleIcon } from '@heroicons/react/24/outline'; // Ícone para o aviso
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
 interface AlertInfo {
   id: number;
@@ -27,9 +27,7 @@ const formatTimeAgo = (isoDateTimeString?: string): string => {
     const days = Math.round(hours / 24);
     const months = Math.round(days / 30.44);
     const years = Math.round(days / 365.25);
-
     if (isNaN(date.getTime())) return 'Data inválida';
-
     if (seconds < 5) return 'Agora mesmo';
     if (seconds < 60) return `Há ${seconds} seg`;
     if (minutes < 60) return `Há ${minutes} min`;
@@ -44,9 +42,9 @@ const formatTimeAgo = (isoDateTimeString?: string): string => {
 
 const AlertCard = ({ alert }: { alert: AlertInfo }) => {
   const { title, severity, source, publishedAt, description } = alert;
-  let bgColor = 'bg-gray-100 dark:bg-gray-700';
-  let textColor = 'text-gray-800 dark:text-gray-200';
-  let borderColor = 'border-gray-300 dark:border-gray-500';
+  let bgColor = 'bg-gray-100 dark:bg-slate-800';
+  let textColor = 'text-gray-800 dark:text-gray-300';
+  let borderColor = 'border-gray-300 dark:border-slate-600';
 
   if (severity === 'Alto') {
     bgColor = 'bg-[var(--alert-red)]/10 dark:bg-[var(--alert-red)]/20';
@@ -58,7 +56,7 @@ const AlertCard = ({ alert }: { alert: AlertInfo }) => {
     borderColor = 'border-[var(--alert-orange)]/50 dark:border-[var(--alert-orange)]';
   } else if (severity === 'Baixo') {
     bgColor = 'bg-[var(--alert-yellow)]/10 dark:bg-[var(--alert-yellow)]/20';
-    textColor = 'text-[var(--alert-yellow)] dark:text-[var(--alert-yellow-dark)]';
+    textColor = 'text-[var(--alert-yellow)] dark:text-[var(--alert-yellow-light)]';
     borderColor = 'border-[var(--alert-yellow)]/50 dark:border-[var(--alert-yellow)]';
   } else if (severity === 'Informativo') {
     bgColor = 'bg-[var(--alert-blue)]/10 dark:bg-[var(--alert-blue)]/20';
@@ -96,28 +94,20 @@ export default function AlertasPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const apiKey = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234'; // Usando variável de ambiente
+        const apiKey = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
         const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-
         const response = await fetch(`${apiBaseUrl}/alertas`, {
           method: 'GET',
           headers: { 'X-API-Key': apiKey }
         });
-
         if (!response.ok) {
           let errorMessage = `HTTP error! status: ${response.status}`;
           try {
             const errorData = await response.json();
-            if (errorData && errorData.entity) {
-              errorMessage = `${errorMessage} - ${errorData.entity}`;
-            } else if (typeof errorData === 'string' && errorData.length > 0) {
-              errorMessage = `${errorMessage} - ${errorData}`;
-            } else if (response.statusText) {
-              errorMessage = `${errorMessage} - ${response.statusText}`;
-            }
-          } catch (e) {
-            // Falha ao parsear
-          }
+            if (errorData && errorData.entity) { errorMessage = `${errorMessage} - ${errorData.entity}`; }
+            else if (typeof errorData === 'string' && errorData.length > 0) { errorMessage = `${errorMessage} - ${errorData}`; }
+            else if (response.statusText) { errorMessage = `${errorMessage} - ${response.statusText}`; }
+          } catch (e) { /* Falha ao parsear JSON do erro, usa mensagem padrão */ }
           throw new Error(errorMessage);
         }
         const data: AlertInfo[] = await response.json();
@@ -129,34 +119,19 @@ export default function AlertasPage() {
         setIsLoading(false);
       }
     };
-
     fetchAlerts();
-
-    const initialDelayTimer = setTimeout(() => {
-      setNoticeState('entering');
-    }, 300);
-
-    const visibilityTimer = setTimeout(() => {
-      setNoticeState('leaving');
-    }, 300 + NOTICE_VISIBLE_DURATION); 
-
-    return () => {
-      clearTimeout(initialDelayTimer);
-      clearTimeout(visibilityTimer);
-    };
+    const initialDelayTimer = setTimeout(() => setNoticeState('entering'), 300);
+    const visibilityTimer = setTimeout(() => setNoticeState('leaving'), 300 + NOTICE_VISIBLE_DURATION); 
+    return () => { clearTimeout(initialDelayTimer); clearTimeout(visibilityTimer); };
   }, []);
 
   useEffect(() => {
     let transitionEndTimerId: NodeJS.Timeout;
     if (noticeState === 'entering') {
-      const rafId = requestAnimationFrame(() => {
-        setNoticeState('visible');
-      });
+      const rafId = requestAnimationFrame(() => setNoticeState('visible'));
       return () => cancelAnimationFrame(rafId);
     } else if (noticeState === 'leaving') {
-      transitionEndTimerId = setTimeout(() => {
-        setNoticeState('hidden'); 
-      }, NOTICE_FADE_DURATION);
+      transitionEndTimerId = setTimeout(() => setNoticeState('hidden'), NOTICE_FADE_DURATION);
       return () => clearTimeout(transitionEndTimerId);
     }
   }, [noticeState]);
@@ -164,8 +139,8 @@ export default function AlertasPage() {
   return (
     <div className="container mx-auto px-4 sm:px-6 py-10 md:py-12">
       <AnimatedSection animationType="fadeInUp" delay="duration-500">
-        <section className="text-center mb-8 md:mb-10"> {/* Reduzido mb */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--brand-header-bg)]">
+        <section className="text-center mb-8 md:mb-10">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--brand-header-bg)] dark:text-blue-400">
             Alertas e Avisos Recentes
           </h1>
           <p className="text-lg text-[var(--brand-text-secondary)] mt-4 max-w-xl mx-auto">
@@ -177,7 +152,10 @@ export default function AlertasPage() {
       {noticeState !== 'hidden' && (
         <div
           className={`
-            mb-6 p-3 bg-blue-50 border-l-4 border-[var(--brand-header-bg)] text-[var(--brand-header-bg)]/80 
+            mb-6 p-3 
+            bg-blue-100 dark:bg-sky-800 
+            border-l-4 border-blue-500 dark:border-sky-600 
+            text-blue-700 dark:text-sky-200 
             rounded-md shadow-sm text-sm flex items-start
             transition-opacity ease-in-out duration-${NOTICE_FADE_DURATION} 
             ${noticeState === 'visible' ? 'opacity-100' : 'opacity-0'}
@@ -200,7 +178,7 @@ export default function AlertasPage() {
 
       {error && (
         <AnimatedSection animationType="fadeIn" delay="duration-300">
-          <div className="text-center py-10 bg-red-100 border border-red-400 text-red-700 px-4 rounded relative" role="alert">
+          <div className="text-center py-10 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 rounded relative" role="alert">
             <strong className="font-bold">Erro!</strong>
             <span className="block sm:inline"> {error}</span>
           </div>

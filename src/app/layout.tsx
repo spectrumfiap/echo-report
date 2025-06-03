@@ -20,15 +20,35 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   const chatbaseChatbotId = "yJNzeKJmvkX0YlGC8HR__";
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var LDM = localStorage.getItem('darkMode');
+                  if (LDM === 'true' || (!LDM && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {
+                  // Opcional: console.error("Erro ao aplicar tema inicial:", e);
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
-        className={`${kanit.className} flex flex-col min-h-screen bg-[var(--brand-background-page)] text-[var(--brand-text-primary)]`}
+        className={`${kanit.className} flex flex-col min-h-screen bg-[var(--brand-background-page)] text-[var(--brand-text-primary)] transition-colors duration-300`}
       >
         <AuthProvider>
           <Header />
@@ -38,7 +58,6 @@ export default function RootLayout({
           <Footer />
         </AuthProvider>
 
-        {/* Script de configuração do Chatbot*/}
         <Script id="chatbase-config" strategy="lazyOnload">
           {`
             window.chatbaseConfig = {
@@ -46,7 +65,6 @@ export default function RootLayout({
             }
           `}
         </Script>
-        {/* Script principal de carregamento do Chat*/}
         <Script 
           src="https://www.chatbase.co/embed.min.js" 
           id={chatbaseChatbotId} 

@@ -3,15 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --brand-header-bg: #007AFF;/* Azul Vivo para o Header */
-  --brand-footer-bg: #2C3E50;/* Azul Escuro/Petróleo para o Footer */
-  --brand-text-header: #FFFFFF;/* Texto Branco para o Header */
-  --brand-text-footer: #CED4DA;/* Texto Cinza Claro para o Footer */
+  --brand-header-bg: #007AFF; /* Azul Vivo para o Header */
+  --brand-footer-bg: #2C3E50; /* Azul Escuro/Petróleo para o Footer */
+  --brand-text-header: #FFFFFF; /* Texto Branco para o Header */
+  --brand-text-footer: #CED4DA; /* Texto Cinza Claro para o Footer */
   --brand-text-footer-hover: #FFFFFF;
-  --brand-background-page: #F7F9FA;/* Cinza Muito Claro para o Fundo da Página */
-  --brand-card-background: #FFFFFF;/* Branco para Cards */
-  --brand-text-primary: #212529; /* Cinza Escuro para Texto Principal */
-  --brand-text-secondary: #6C757D;/* Cinza Médio para Texto Secundário */
+  --brand-background-page: #F7F9FA; /* Cinza Muito Claro para o Fundo da Página */
+  --brand-card-background: #FFFFFF; /* Branco para Cards */
+  --brand-input-background: #FFFFFF; /* Fundo de inputs no modo claro */
+  --brand-text-primary: #212529;  /* Cinza Escuro para Texto Principal */
+  --brand-text-secondary: #6C757D; /* Cinza Médio para Texto Secundário */
   
   --alert-red: #E74C3C;
   --alert-orange: #F39C12;
@@ -20,9 +21,27 @@
   --success-green: #2ECC71;
 
   --shadow-subtle: 0px 4px 16px rgba(0, 0, 0, 0.06);
-  }
+
+  --color-transition: color 0.3s ease-in-out, background-color 0.3s ease-in-out;
+}
+
+html.dark {
+  --brand-header-bg: #0056b3; /* Azul mais escuro para Header */
+  --brand-footer-bg: #1D2B38; /* Azul Petróleo mais escuro para o Footer */
+  --brand-text-header: #E0E0E0; /* Texto levemente off-white para o Header */
+  --brand-text-footer: #A8B5C1; /* Texto Cinza um pouco mais claro para o Footer */
+  --brand-text-footer-hover: #FFFFFF;
+  --brand-background-page: #121212; /* Fundo bem escuro para a Página */
+  --brand-card-background: #1E1E1E; /* Fundo escuro para Cards (ex: cinza escuro) */
+  --brand-input-background: #2D3748; /* Fundo de inputs no modo escuro (ex: slate-800 ou um cinza escuro) */
+  --brand-text-primary: #E5E5E5;   /* Texto principal claro */
+  --brand-text-secondary: #A0A0A0;/* Texto secundário mais claro */
+  
+  --shadow-subtle: 0px 4px 16px rgba(255, 255, 255, 0.04);
+}
 
 body {
   background-color: var(--brand-background-page);
   color: var(--brand-text-primary);
+  transition: var(--color-transition);
 }

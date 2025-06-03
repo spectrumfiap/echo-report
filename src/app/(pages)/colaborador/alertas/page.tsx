@@ -1,3 +1,4 @@
+// src/app/(admin)/colaborador/gerenciar-alertas/page.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
@@ -9,44 +10,23 @@ type AlertSeverity = 'Alto' | 'Medio' | 'Baixo' | 'Informativo';
 type AlertStatus = 'rascunho' | 'agendado' | 'ativo' | 'expirado' | 'cancelado';
 
 interface ApiAlert {
-  id: number;
-  title: string;
-  description: string;
-  severity: AlertSeverity;
-  source: string;
-  publishedAt: string; // ISO string from backend
-  targetArea?: string;
-  status: AlertStatus;
+  id: number; title: string; description: string; severity: AlertSeverity;
+  source: string; publishedAt: string; targetArea?: string; status: AlertStatus;
 }
-
 interface AlertData {
-  id: string;
-  title: string;
-  description: string;
-  severity: AlertSeverity;
-  source: string;
-  publishedAt: string; // ISO string
-  targetArea?: string;
-  status: AlertStatus;
+  id: string; title: string; description: string; severity: AlertSeverity;
+  source: string; publishedAt: string; targetArea?: string; status: AlertStatus;
 }
-
 interface AlertFormData {
-  id?: string;
-  title: string;
-  description: string;
-  severity: AlertSeverity;
-  source: string;
-  publishedAt?: string; // ISO string for new/updated publication/schedule time
-  targetArea?: string;
-  status: AlertStatus;
+  id?: string; title: string; description: string; severity: AlertSeverity;
+  source: string; publishedAt?: string; targetArea?: string; status: AlertStatus;
 }
 
-const API_BASE_URL = 'http://localhost:8080';
-const STATIC_API_KEY = '1234';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const STATIC_API_KEY = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
 
 const severityOptions: AlertSeverity[] = ['Informativo', 'Baixo', 'Medio', 'Alto'];
 const statusOptions: AlertStatus[] = ['rascunho', 'agendado', 'ativo', 'cancelado', 'expirado'];
-
 
 export default function GerenciarAlertasPage() {
   const { isAdmin, isAuthenticated } = useAuth();
@@ -62,40 +42,33 @@ export default function GerenciarAlertasPage() {
   const [alertFormData, setAlertFormData] = useState<AlertFormData | null>(null);
   const [isSubmittingModal, setIsSubmittingModal] = useState(false);
 
-  const mapApiAlertToAlertData = useCallback((apiAlert: ApiAlert): AlertData => {
-    return {
-      id: String(apiAlert.id),
-      title: apiAlert.title,
-      description: apiAlert.description,
-      severity: apiAlert.severity,
-      source: apiAlert.source,
-      publishedAt: apiAlert.publishedAt,
-      targetArea: apiAlert.targetArea || '',
-      status: apiAlert.status,
-    };
-  }, []);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterSeverity, setFilterSeverity] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+
+  const mapApiAlertToAlertData = useCallback((apiAlert: ApiAlert): AlertData => ({
+    id: String(apiAlert.id), title: apiAlert.title, description: apiAlert.description,
+    severity: apiAlert.severity, source: apiAlert.source, publishedAt: apiAlert.publishedAt,
+    targetArea: apiAlert.targetArea || '', status: apiAlert.status,
+  }), []);
 
   const fetchAlerts = useCallback(async () => {
     if (!isAdmin) return;
-    setIsLoading(true);
-    setNotification(null);
+    setIsLoading(true); setNotification(null);
     try {
       const response = await fetch(`${API_BASE_URL}/alertas`, {
-        method: 'GET',
-        headers: { 'X-API-Key': STATIC_API_KEY, 'Content-Type': 'application/json' },
+        method: 'GET', headers: { 'X-API-Key': STATIC_API_KEY, 'Content-Type': 'application/json' },
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
         throw new Error(errorData.message || `Erro ${response.status}`);
       }
       const apiAlerts: ApiAlert[] = await response.json();
-      setAlerts(apiAlerts.map(mapApiAlertToAlertData));
+      setAlerts(apiAlerts.map(mapApiAlertToAlertData).sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
     } catch (error: any) {
       setNotification({ type: 'error', message: error.message || 'Falha ao carregar alertas.' });
       setAlerts([]);
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   }, [isAdmin, mapApiAlertToAlertData]);
 
   useEffect(() => {
@@ -106,39 +79,23 @@ export default function GerenciarAlertasPage() {
 
   const formatDateTimeForInput = (isoString?: string) => {
     if (!isoString) return '';
-    try {
-      const date = new Date(isoString);
-      // Formato YYYY-MM-DDTHH:MM
-      return date.toISOString().slice(0, 16);
-    } catch (e) {
-      return '';
-    }
+    try { const date = new Date(isoString); return date.toISOString().slice(0, 16); }
+    catch (e) { return ''; }
   };
   
   const openModal = (action: 'add' | 'edit' | 'view', alert?: AlertData) => {
-    setModalAction(action);
-    setNotification(null);
+    setModalAction(action); setNotification(null);
     if (action === 'add') {
       setAlertFormData({
-        title: '',
-        description: '',
-        severity: 'Informativo',
-        source: '',
-        targetArea: '',
-        status: 'rascunho',
-        publishedAt: formatDateTimeForInput(new Date().toISOString()), // Default to now for 'agendado' or manual setting
+        title: '', description: '', severity: 'Informativo', source: 'Defesa Civil',
+        targetArea: '', status: 'rascunho', publishedAt: formatDateTimeForInput(new Date().toISOString()),
       });
       setSelectedAlert(null);
     } else if (alert) {
       setSelectedAlert(alert);
       setAlertFormData({
-        id: alert.id,
-        title: alert.title,
-        description: alert.description,
-        severity: alert.severity,
-        source: alert.source,
-        targetArea: alert.targetArea || '',
-        status: alert.status,
+        id: alert.id, title: alert.title, description: alert.description, severity: alert.severity,
+        source: alert.source, targetArea: alert.targetArea || '', status: alert.status,
         publishedAt: formatDateTimeForInput(alert.publishedAt),
       });
     }
@@ -146,11 +103,8 @@ export default function GerenciarAlertasPage() {
   };
 
   const closeModal = () => {
-    setIsModalOpen(false);
-    setModalAction(null);
-    setSelectedAlert(null);
-    setAlertFormData(null);
-    setIsSubmittingModal(false);
+    setIsModalOpen(false); setModalAction(null); setSelectedAlert(null);
+    setAlertFormData(null); setIsSubmittingModal(false);
   };
 
   const handleFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -160,75 +114,47 @@ export default function GerenciarAlertasPage() {
   };
 
   const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!alertFormData) return;
-    setIsSubmittingModal(true);
-    setNotification(null);
-
-    // O backend AlertaResource POST e PUT esperam um objeto Alerta
+    e.preventDefault(); if (!alertFormData) return;
+    setIsSubmittingModal(true); setNotification(null);
     const payload = {
-      title: alertFormData.title,
-      description: alertFormData.description,
-      severity: alertFormData.severity,
-      source: alertFormData.source,
-      targetArea: alertFormData.targetArea,
-      status: alertFormData.status,
-      // publishedAt: se status for 'agendado', usar o valor do form.
-      // Se status for 'ativo' na criação, o backend deve definir como now().
-      // Se editando, enviar o valor atualizado.
+      title: alertFormData.title, description: alertFormData.description, severity: alertFormData.severity,
+      source: alertFormData.source, targetArea: alertFormData.targetArea, status: alertFormData.status,
       publishedAt: (alertFormData.status === 'agendado' || modalAction === 'edit') && alertFormData.publishedAt
-                   ? new Date(alertFormData.publishedAt).toISOString()
-                   : (modalAction === 'add' && alertFormData.status === 'ativo' ? new Date().toISOString() : undefined),
+                    ? new Date(alertFormData.publishedAt).toISOString()
+                    : (modalAction === 'add' && alertFormData.status === 'ativo' ? new Date().toISOString() : undefined),
     };
-    // Remover publishedAt se for undefined (ex: criando alerta ativo, backend define)
-    if (payload.publishedAt === undefined) {
-        delete payload.publishedAt;
-    }
-
-
+    if (payload.publishedAt === undefined) { delete (payload as any).publishedAt; }
     let response: Response;
     try {
       if (modalAction === 'add') {
         response = await fetch(`${API_BASE_URL}/alertas`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
           body: JSON.stringify(payload),
         });
       } else if (modalAction === 'edit' && alertFormData.id) {
         response = await fetch(`${API_BASE_URL}/alertas/${alertFormData.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
-          body: JSON.stringify({ id: parseInt(alertFormData.id), ...payload }), // Backend espera Alerta completo, incluindo ID para PUT
+          method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
+          body: JSON.stringify({ id: parseInt(alertFormData.id), ...payload }),
         });
-      } else {
-        throw new Error("Ação de formulário inválida.");
-      }
-
+      } else { throw new Error("Ação de formulário inválida."); }
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
         throw new Error(errorData.message || errorData.entity || `Erro ${response.status}`);
       }
-      
       const actionText = modalAction === 'add' ? 'criado' : 'atualizado';
       setNotification({ type: 'success', message: `Alerta ${actionText} com sucesso!` });
-      fetchAlerts();
-      closeModal();
-
+      fetchAlerts(); closeModal();
     } catch (error: any) {
       setNotification({ type: 'error', message: error.message || `Falha ao ${modalAction === 'add' ? 'criar' : 'atualizar'} alerta.` });
-    } finally {
-      setIsSubmittingModal(false);
-    }
+    } finally { setIsSubmittingModal(false); }
   };
   
   const handleRemover = async (alertId: string, alertTitle: string) => {
     if (window.confirm(`Tem certeza que deseja remover o alerta "${alertTitle}"?`)) {
       setNotification(null);
-      // setIsLoading(true); // Pode ser confuso com o loading da tabela
       try {
         const response = await fetch(`${API_BASE_URL}/alertas/${alertId}`, {
-          method: 'DELETE',
-          headers: { 'X-API-Key': STATIC_API_KEY },
+          method: 'DELETE', headers: { 'X-API-Key': STATIC_API_KEY },
         });
         if (!response.ok) {
           let errorMsg = `Erro ${response.status}`;
@@ -239,8 +165,6 @@ export default function GerenciarAlertasPage() {
         fetchAlerts();
       } catch (error: any) {
         setNotification({ type: 'error', message: error.message || 'Falha ao remover alerta.' });
-      } finally {
-        // setIsLoading(false);
       }
     }
   };
@@ -248,63 +172,69 @@ export default function GerenciarAlertasPage() {
   const handleEnviarAgora = async (alertId: string) => {
     const alertToUpdate = alerts.find(a => a.id === alertId);
     if (!alertToUpdate) return;
-
-    if (window.confirm(`Tem certeza que deseja enviar o alerta "${alertToUpdate.title}" agora? Seu status será 'ativo' e a data de publicação atualizada.`)) {
-        setIsSubmittingModal(true); // Pode usar um loading específico para esta ação
-        setNotification(null);
+    if (window.confirm(`Tem certeza que deseja enviar o alerta "${alertToUpdate.title}" agora?`)) {
+        setIsSubmittingModal(true); setNotification(null);
         try {
-            const payload = {
-                ...alertToUpdate, // Envia todos os campos do alerta existente
-                id: parseInt(alertToUpdate.id), // Backend espera id como int
-                status: 'ativo' as AlertStatus,
-                publishedAt: new Date().toISOString(),
-            };
-            // O campo description já está completo em alertToUpdate.title
-            // Se a API espera o objeto completo da entidade Alerta, garanta que todos os campos obrigatórios estão lá
-
+            const payload = { ...alertToUpdate, id: parseInt(alertToUpdate.id), status: 'ativo' as AlertStatus, publishedAt: new Date().toISOString() };
             const response = await fetch(`${API_BASE_URL}/alertas/${alertId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
+                method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
                 body: JSON.stringify(payload),
             });
-
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
                 throw new Error(errorData.message || errorData.entity || `Erro ${response.status}`);
             }
             setNotification({ type: 'success', message: `Alerta "${alertToUpdate.title}" enviado com sucesso.` });
-            fetchAlerts(); // Recarrega a lista
+            fetchAlerts();
         } catch (error: any) {
             setNotification({ type: 'error', message: error.message || 'Falha ao enviar alerta.' });
-        } finally {
-            setIsSubmittingModal(false);
-        }
+        } finally { setIsSubmittingModal(false); }
     }
   };
+  
+  const filteredAlerts = alerts.filter(alert => {
+    const searchTermLower = searchTerm.toLowerCase();
+    const titleMatch = alert.title.toLowerCase().includes(searchTermLower);
+    const areaMatch = alert.targetArea?.toLowerCase().includes(searchTermLower);
+    const severityMatch = filterSeverity ? alert.severity === filterSeverity : true;
+    const statusMatch = filterStatus ? alert.status === filterStatus : true;
+    return (titleMatch || areaMatch) && severityMatch && statusMatch;
+  });
+  
+  const inputStyles = "p-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] dark:focus:ring-blue-500 focus:border-[var(--brand-header-bg)] dark:focus:border-blue-500 sm:text-sm transition-colors bg-[var(--brand-input-background)] text-[var(--brand-text-primary)] placeholder:text-slate-400 dark:placeholder:text-slate-500";
+  const modalInputStyles = `mt-1 w-full ${inputStyles}`;
+  const modalTextareaStyles = `${modalInputStyles} min-h-[80px]`;
+  const modalSelectStyles = `${modalInputStyles} appearance-none`;
 
 
   if (!isAuthenticated || !isAdmin && typeof window !== 'undefined') {
-    return <div className="container mx-auto p-6 text-center">Verificando permissões...</div>;
+    return <div className="container mx-auto p-6 text-center text-[var(--brand-text-secondary)]">Verificando permissões...</div>;
   }
-  if (!isAdmin && !isLoading) return null;
+  if (!isAdmin && !isLoading) {
+     router.push('/');
+     return <div className="container mx-auto p-6 text-center text-[var(--brand-text-secondary)]">Acesso negado. Redirecionando...</div>;
+  }
 
   const renderModalContent = () => {
-    const dataForView = selectedAlert; // Para visualização
-    const dataForForm = alertFormData; // Para add/edit
-
+    const dataForView = selectedAlert; const dataForForm = alertFormData;
     if (modalAction === 'view') {
       if (!dataForView) return null;
       return (
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-sm text-[var(--brand-text-secondary)]">
           <h3 className="text-xl font-semibold text-[var(--brand-text-primary)] mb-4">Detalhes do Alerta</h3>
-          <p><strong>ID:</strong> {dataForView.id}</p>
-          <p><strong>Título:</strong> {dataForView.title}</p>
-          <p><strong>Descrição Completa:</strong><br/> <span className="whitespace-pre-wrap">{dataForView.description}</span></p>
-          <p><strong>Severidade:</strong> {dataForView.severity}</p>
-          <p><strong>Fonte:</strong> {dataForView.source}</p>
-          <p><strong>Área Alvo:</strong> {dataForView.targetArea || 'N/A'}</p>
-          <p><strong>Status:</strong> {dataForView.status}</p>
-          <p><strong>Publicado/Agendado para:</strong> {new Date(dataForView.publishedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</p>
+          <p><strong>ID:</strong> <span className="text-[var(--brand-text-primary)]">{dataForView.id}</span></p>
+          <p><strong>Título:</strong> <span className="text-[var(--brand-text-primary)]">{dataForView.title}</span></p>
+          <p><strong>Descrição:</strong><br/> <span className="whitespace-pre-wrap text-[var(--brand-text-primary)]">{dataForView.description}</span></p>
+          <p><strong>Severidade:</strong> <span className="text-[var(--brand-text-primary)]">{dataForView.severity}</span></p>
+          <p><strong>Fonte:</strong> <span className="text-[var(--brand-text-primary)]">{dataForView.source}</span></p>
+          <p><strong>Área Alvo:</strong> <span className="text-[var(--brand-text-primary)]">{dataForView.targetArea || 'N/A'}</span></p>
+          <p><strong>Status:</strong> <span className="text-[var(--brand-text-primary)] capitalize">{dataForView.status ? dataForView.status.replace('_',' ') : '-'}</span></p>
+          <p><strong>Publicado/Agendado:</strong> <span className="text-[var(--brand-text-primary)]">{new Date(dataForView.publishedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span></p>
+          <div className="flex justify-end pt-4">
+            <button type="button" onClick={closeModal} className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-500 focus:ring-slate-400 dark:focus:ring-slate-500 dark:focus:ring-offset-[var(--brand-card-background)]`}>
+              Fechar
+            </button>
+          </div>
         </div>
       );
     } else if (modalAction === 'add' || modalAction === 'edit') {
@@ -315,47 +245,45 @@ export default function GerenciarAlertasPage() {
             {modalAction === 'add' ? 'Criar Novo Alerta' : 'Editar Alerta'}
           </h3>
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Título</label>
-            <input type="text" name="title" id="title" value={dataForForm.title} onChange={handleFormInputChange} required className="mt-1 p-2 w-full border border-slate-300 rounded-md shadow-sm"/>
+            <label htmlFor="titleModal" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Título</label>
+            <input type="text" name="title" id="titleModal" value={dataForForm.title} onChange={handleFormInputChange} required className={modalInputStyles}/>
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Descrição Completa</label>
-            <textarea name="description" id="description" rows={4} value={dataForForm.description} onChange={handleFormInputChange} required className="mt-1 p-2 w-full border border-slate-300 rounded-md shadow-sm"/>
-          </div>
-           <div>
-            <label htmlFor="source" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Fonte</label>
-            <input type="text" name="source" id="source" value={dataForForm.source} onChange={handleFormInputChange} required className="mt-1 p-2 w-full border border-slate-300 rounded-md shadow-sm"/>
+            <label htmlFor="descriptionModal" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Descrição Completa</label>
+            <textarea name="description" id="descriptionModal" rows={4} value={dataForForm.description} onChange={handleFormInputChange} required className={modalTextareaStyles}/>
           </div>
           <div>
-            <label htmlFor="targetArea" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Área Alvo</label>
-            <input type="text" name="targetArea" id="targetArea" value={dataForForm.targetArea || ''} onChange={handleFormInputChange} className="mt-1 p-2 w-full border border-slate-300 rounded-md shadow-sm"/>
+            <label htmlFor="sourceModal" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Fonte</label>
+            <input type="text" name="source" id="sourceModal" value={dataForForm.source} onChange={handleFormInputChange} required className={modalInputStyles}/>
           </div>
           <div>
-            <label htmlFor="severity" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Severidade</label>
-            <select name="severity" id="severity" value={dataForForm.severity} onChange={handleFormInputChange} className="mt-1 p-2 w-full border border-slate-300 rounded-md shadow-sm">
-              {severityOptions.map(s => <option key={s} value={s}>{s}</option>)}
+            <label htmlFor="targetAreaModal" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Área Alvo (opcional)</label>
+            <input type="text" name="targetArea" id="targetAreaModal" value={dataForForm.targetArea || ''} onChange={handleFormInputChange} className={modalInputStyles}/>
+          </div>
+          <div>
+            <label htmlFor="severityModal" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Severidade</label>
+            <select name="severity" id="severityModal" value={dataForForm.severity} onChange={handleFormInputChange} className={modalSelectStyles}>
+              {severityOptions.map(s => <option key={s} value={s} className="bg-[var(--brand-input-background)] text-[var(--brand-text-primary)]">{s}</option>)}
             </select>
           </div>
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Status</label>
-            <select name="status" id="status" value={dataForForm.status} onChange={handleFormInputChange} className="mt-1 p-2 w-full border border-slate-300 rounded-md shadow-sm">
-              {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+            <label htmlFor="statusModal" className="block text-sm font-medium text-[var(--brand-text-secondary)]">Status</label>
+            <select name="status" id="statusModal" value={dataForForm.status} onChange={handleFormInputChange} className={modalSelectStyles}>
+              {statusOptions.map(s => <option key={s} value={s} className="bg-[var(--brand-input-background)] text-[var(--brand-text-primary)] capitalize">{s ? s.replace('_', ' ') : '-'}</option>)}
             </select>
           </div>
-           <div>
-            <label htmlFor="publishedAt" className="block text-sm font-medium text-[var(--brand-text-secondary)]">
-              {dataForForm.status === 'agendado' ? 'Agendar Para:' : 'Data de Publicação (para edição):'}
+          <div>
+            <label htmlFor="publishedAtModal" className="block text-sm font-medium text-[var(--brand-text-secondary)]">
+              {dataForForm.status === 'agendado' ? 'Agendar Para:' : (modalAction === 'edit' ? 'Data de Publicação/Agendamento:' : 'Data de Publicação (auto se "ativo"):')}
             </label>
-            <input type="datetime-local" name="publishedAt" id="publishedAt"
-                   value={dataForForm.publishedAt || ''}
-                   onChange={handleFormInputChange}
-                   className="mt-1 p-2 w-full border border-slate-300 rounded-md shadow-sm"/>
-            {modalAction === 'add' && dataForForm.status !== 'agendado' && <p className="text-xs text-slate-500 mt-1">Para status 'ativo', será definido como agora se deixado em branco.</p>}
+            <input type="datetime-local" name="publishedAt" id="publishedAtModal" value={dataForForm.publishedAt || ''} onChange={handleFormInputChange} className={`${modalInputStyles} dark:[color-scheme:dark]`} />
+            {modalAction === 'add' && dataForForm.status !== 'agendado' && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Para status 'ativo', será definido como agora se deixado em branco.</p>}
           </div>
-
           <div className="flex justify-end space-x-3 pt-4">
-            <button type="button" onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Cancelar</button>
-            <button type="submit" disabled={isSubmittingModal} className="px-4 py-2 text-sm font-medium text-white bg-[var(--brand-header-bg)] rounded-md hover:bg-opacity-80 disabled:opacity-50">
+            <button type="button" onClick={closeModal} className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-500 focus:ring-slate-400 dark:focus:ring-slate-500 dark:focus:ring-offset-[var(--brand-card-background)]`}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={isSubmittingModal} className={`px-4 py-2 text-sm font-medium text-white rounded-md hover:bg-opacity-80 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-[var(--brand-header-bg)] dark:bg-blue-600 dark:hover:bg-blue-500 focus:ring-[var(--brand-header-bg)] dark:focus:ring-blue-500 dark:focus:ring-offset-[var(--brand-card-background)]`}>
               {isSubmittingModal ? 'Salvando...' : (modalAction === 'add' ? 'Criar Alerta' : 'Salvar Alterações')}
             </button>
           </div>
@@ -367,55 +295,61 @@ export default function GerenciarAlertasPage() {
   
   const getSeverityClass = (severity: AlertSeverity) => {
     switch (severity) {
-        case 'Alto': return 'bg-red-100 text-red-800';
-        case 'Medio': return 'bg-yellow-100 text-yellow-800'; // Mock usava orange, backend tem Medio
-        case 'Baixo': return 'bg-blue-100 text-blue-800';   // Mock usava yellow, backend tem Baixo
-        case 'Informativo': return 'bg-gray-100 text-gray-800'; // Mock usava blue para informativo
-        default: return 'bg-gray-100 text-gray-800';
+        case 'Alto': return 'bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-300';
+        case 'Medio': return 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-300';
+        case 'Baixo': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300';
+        case 'Informativo': return 'bg-slate-100 dark:bg-slate-500/20 text-slate-800 dark:text-slate-300';
+        default: return 'bg-gray-100 dark:bg-gray-500/20 text-gray-800 dark:text-gray-300';
     }
   };
-
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-10 md:py-12">
       <section className="mb-10 md:mb-12">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-[var(--brand-header-bg)]">Gerenciar Alertas</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-[var(--brand-header-bg)] dark:text-blue-400">Gerenciar Alertas</h1>
           <button onClick={() => openModal('add')}
-            className="w-full sm:w-auto bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] font-semibold px-6 py-2.5 rounded-lg shadow-md hover:bg-opacity-80 transition-colors flex items-center justify-center">
-            <PlusCircleIcon className="w-5 h-5 mr-2" /> Criar Novo Alerta
+            className="w-full sm:w-auto bg-[var(--brand-header-bg)] dark:bg-blue-600 text-[var(--brand-text-header)] dark:hover:bg-blue-500 font-semibold px-6 py-2.5 rounded-lg shadow-md hover:bg-opacity-80 transition-colors flex items-center justify-center">
+            <PlusCircleIcon className="w-5 h-5 mr-2" /> Adicionar Alerta
           </button>
         </div>
         <p className="text-lg text-[var(--brand-text-secondary)] mt-4">Crie, agende, edite ou remova alertas para a comunidade.</p>
       </section>
 
       {notification && (
-        <div className={`p-4 mb-6 text-sm rounded-lg ${notification.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`} role="alert">
+        <div className={`p-4 mb-6 text-sm rounded-lg ${notification.type === 'success' ? 'bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-600' : 'bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-600'}`} role="alert">
           {notification.message}
         </div>
       )}
       
-      <section className="mb-8 p-4 bg-[var(--brand-card-background)] rounded-lg shadow-[var(--shadow-subtle)]">
-        <h2 className="text-xl font-semibold text-[var(--brand-text-primary)] mb-3">Filtros e Busca</h2>
+      <section className="mb-8 p-4 sm:p-6 bg-[var(--brand-card-background)] rounded-lg shadow-[var(--shadow-subtle)]">
+        <h2 className="text-xl font-semibold text-[var(--brand-text-primary)] mb-4">Filtros e Busca</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input type="text" placeholder="Buscar por título ou área..." className="p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-[var(--brand-header-bg)]"/>
-          <select className="p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-[var(--brand-header-bg)]">
-            <option value="">Todas as Severidades</option>
-            {severityOptions.map(s => <option key={s} value={s.toLowerCase()}>{s}</option>)}
+          <input type="text" placeholder="Buscar por título ou área..." 
+            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+            className={`${inputStyles} w-full`}
+          />
+          <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}
+            className={`${inputStyles} w-full appearance-none`}
+          >
+            <option value="" className="bg-[var(--brand-input-background)] text-[var(--brand-text-primary)]">Todas as Severidades</option>
+            {severityOptions.map(s => <option key={s} value={s} className="bg-[var(--brand-input-background)] text-[var(--brand-text-primary)]">{s}</option>)}
           </select>
-          <select className="p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-[var(--brand-header-bg)]">
-            <option value="">Todos os Status</option>
-            {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+            className={`${inputStyles} w-full appearance-none`}
+          >
+            <option value="" className="bg-[var(--brand-input-background)] text-[var(--brand-text-primary)]">Todos os Status</option>
+            {statusOptions.map(s => <option key={s} value={s} className="bg-[var(--brand-input-background)] text-[var(--brand-text-primary)] capitalize">{s ? s.replace('_', ' ') : '-'}</option>)}
           </select>
         </div>
       </section>
 
-      <section className="bg-[var(--brand-card-background)] p-4 sm:p-6 rounded-lg shadow-[var(--shadow-subtle)] overflow-x-auto">
+      <section className="bg-[var(--brand-card-background)] rounded-lg shadow-[var(--shadow-subtle)] overflow-x-auto">
         {isLoading ? (
           <p className="text-center text-[var(--brand-text-secondary)] py-8">Carregando alertas...</p>
-        ) : alerts.length > 0 ? (
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+        ) : filteredAlerts.length > 0 ? (
+          <table className="min-w-full">
+            <thead className="bg-slate-100 dark:bg-slate-800">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--brand-text-secondary)] uppercase tracking-wider">Título</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--brand-text-secondary)] uppercase tracking-wider">Severidade</th>
@@ -425,39 +359,41 @@ export default function GerenciarAlertasPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--brand-text-secondary)] uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {alerts.map((alertItem) => (
-                <tr key={alertItem.id} className="hover:bg-slate-50 transition-colors">
+            <tbody className="bg-[var(--brand-card-background)] divide-y divide-slate-200 dark:divide-slate-700">
+              {filteredAlerts.map((alertItem) => (
+                <tr key={alertItem.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--brand-text-primary)] max-w-xs truncate" title={alertItem.title}>{alertItem.title}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getSeverityClass(alertItem.severity)}`}>
                       {alertItem.severity}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--brand-text-secondary)] max-w-xs truncate" title={alertItem.targetArea}>{alertItem.targetArea}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--brand-text-secondary)]">{alertItem.status}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--brand-text-secondary)] max-w-xs truncate" title={alertItem.targetArea}>{alertItem.targetArea || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--brand-text-secondary)] capitalize">
+                    {alertItem.status ? alertItem.status.replace('_', ' ') : '-'}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--brand-text-secondary)]">
                     {alertItem.publishedAt ? new Date(alertItem.publishedAt).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'}) : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-1 flex">
-                    <button onClick={() => openModal('view', alertItem)} title="Visualizar" className="text-slate-600 hover:text-slate-800 p-1"><EyeIcon className="w-5 h-5"/></button>
-                    <button onClick={() => openModal('edit', alertItem)} title="Editar" className="text-yellow-600 hover:text-yellow-800 p-1"><PencilSquareIcon className="w-5 h-5"/></button>
+                    <button onClick={() => openModal('view', alertItem)} title="Visualizar" className="text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700/50"><EyeIcon className="w-5 h-5"/></button>
+                    <button onClick={() => openModal('edit', alertItem)} title="Editar" className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 p-1 rounded-md hover:bg-yellow-100 dark:hover:bg-yellow-600/50"><PencilSquareIcon className="w-5 h-5"/></button>
                     {(alertItem.status === 'rascunho' || alertItem.status === 'agendado') &&
-                        <button onClick={() => handleEnviarAgora(alertItem.id)} title="Enviar Agora" className="text-green-600 hover:text-green-800 p-1"><PaperAirplaneIcon className="w-5 h-5"/></button>
+                        <button onClick={() => handleEnviarAgora(alertItem.id)} title="Enviar Agora" className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 p-1 rounded-md hover:bg-green-100 dark:hover:bg-green-600/50"><PaperAirplaneIcon className="w-5 h-5"/></button>
                     }
-                    <button onClick={() => handleRemover(alertItem.id, alertItem.title)} title="Remover" className="text-red-600 hover:text-red-800 p-1"><TrashIcon className="w-5 h-5"/></button>
+                    <button onClick={() => handleRemover(alertItem.id, alertItem.title)} title="Remover" className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-1 rounded-md hover:bg-red-100 dark:hover:bg-red-700/50"><TrashIcon className="w-5 h-5"/></button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : (
-          <p className="text-center text-[var(--brand-text-secondary)] py-8">Nenhum alerta encontrado ou falha ao carregar.</p>
+          <p className="text-center text-[var(--brand-text-secondary)] py-8">Nenhum alerta encontrado.</p>
         )}
       </section>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-[var(--brand-card-background)] p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-[var(--brand-text-primary)]">
@@ -465,11 +401,11 @@ export default function GerenciarAlertasPage() {
                 {modalAction === 'edit' && 'Editar Alerta'}
                 {modalAction === 'view' && 'Detalhes do Alerta'}
               </h2>
-              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+              <button onClick={closeModal} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-md">
                 <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
-            {renderModalContent()}
+            {renderModalContent()} 
           </div>
         </div>
       )}

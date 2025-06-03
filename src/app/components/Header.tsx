@@ -4,8 +4,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../contexts/AuthContext';
-import { useState, useEffect } from 'react'; // useEffect foi adicionado na última versão para resize
+import { useState, useEffect } from 'react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ThemeSwitcher } from './ThemeSwitcher'; // Importe o ThemeSwitcher
 
 export default function Header() {
   const { isAuthenticated, isAdmin, logout } = useAuth();
@@ -20,10 +21,9 @@ export default function Header() {
     setIsMenuOpen(false);
   };
 
-  // Efeito para fechar o menu se a tela for redimensionada para desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) { // 768px é o breakpoint 'md' padrão do Tailwind
+      if (window.innerWidth >= 768) {
         setIsMenuOpen(false);
       }
     };
@@ -31,8 +31,8 @@ export default function Header() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-
   const navLinkBaseClassName = "transition-colors";
+  // Ajuste para que o ThemeSwitcher possa usar a cor de texto do header
   const desktopNavLinkClassName = `${navLinkBaseClassName} hover:text-[var(--brand-text-header)]/80`;
   const mobileNavLinkClassName = `${navLinkBaseClassName} block px-3 py-2 rounded-md hover:bg-white/10 w-full text-left`;
   const mobileAuthButtonClassName = `${navLinkBaseClassName} block w-full text-left px-3 py-2 rounded-md bg-white/20 hover:bg-white/30 text-center`;
@@ -40,7 +40,6 @@ export default function Header() {
   return (
     <header className="bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-4 flex items-center justify-between">
-        {/* Ajustei os paddings responsivos aqui no container, como no Footer */}
         <Link href="/" className="flex-shrink-0 flex items-center hover:opacity-90 transition-opacity" onClick={handleLinkClick}>
           <Image
             src="/assets/echoreportlogo.png"
@@ -96,9 +95,13 @@ export default function Header() {
               </Link>
             </>
           )}
+          {/* Adiciona o ThemeSwitcher aqui para desktop */}
+          <ThemeSwitcher className="hover:bg-white/10" />
         </nav>
 
-        <div className="md:hidden flex items-center flex-shrink-0">
+        <div className="md:hidden flex items-center flex-shrink-0 space-x-2">
+          {/* Adiciona o ThemeSwitcher aqui para mobile, antes do botão de menu */}
+          <ThemeSwitcher className="hover:bg-white/10" />
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Abrir menu"
@@ -114,7 +117,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Menu Mobile Dropdown com animação */}
+      {/* Menu Mobile Dropdown */}
       <div
         className={`
           md:hidden absolute top-full left-0 right-0 bg-[var(--brand-header-bg)] shadow-xl border-t border-white/20 overflow-hidden
@@ -123,7 +126,6 @@ export default function Header() {
         `}
       >
         <nav className="container mx-auto px-4 pt-2 flex flex-col space-y-1 text-base font-medium">
-        {/* Os paddings aqui devem corresponder ao px-4 do container principal do header para alinhar */}
           <Link href="/mapa" className={mobileNavLinkClassName} onClick={handleLinkClick}>Mapa</Link>
           <Link href="/reportar" className={mobileNavLinkClassName} onClick={handleLinkClick}>Reportar</Link>
           <Link href="/alertas" className={mobileNavLinkClassName} onClick={handleLinkClick}>Alertas</Link>
@@ -161,6 +163,12 @@ export default function Header() {
               </Link>
             </>
           )}
+          {/* O ThemeSwitcher já foi adicionado acima para mobile, ao lado do botão de menu.
+              Se preferir que ele seja um item DENTRO do menu dropdown, mova-o para cá:
+          <div className="px-3 py-2">
+             <ThemeSwitcher className="hover:bg-white/10 w-full justify-start" />
+          </div>
+          */}
         </nav>
       </div>
     </header>
