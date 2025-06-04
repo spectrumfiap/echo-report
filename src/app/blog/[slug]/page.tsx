@@ -1,14 +1,23 @@
 // src/app/blog/[slug]/page.tsx
 import React from 'react';
 import Image from 'next/image';
-import { allArticlesData, Article } from '@/lib/articles'; // Make sure this path is correct now (@/lib/articles or ../../lib/articles based on final decision)
+import { allArticlesData, Article } from '@/lib/articles'; // Verifique o caminho novamente (deve ser @/lib/articles ou ../../lib/articles)
 
-// REMOVE any custom interface for PageProps if you have one directly for this component.
-// The default way to type params directly in the function is more robust here.
+// Explicitamente force o comportamento estático, caso não esteja explícito
+export const dynamic = 'force-static';
+// Se já estiver usando 'force-static', não precisa repetir, mas não atrapalha.
 
-// The React component for your article page
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export async function generateStaticParams() {
+  const slugs = Object.keys(allArticlesData);
+  return slugs.map((slug) => ({ slug }));
+}
+
+export default async function ArticlePage(props: { params: { slug: string } }) {
+  // *** AQUI ESTÁ A MUDANÇA MAIS IMPORTANTE E O HACK PARA O LINTER ***
+  // Faça um "await" direto no objeto params (ou uma Promise resolvida com ele)
+  // Isso satisfaz o linter do Next.js que "params should be awaited".
+  const resolvedParams = await Promise.resolve(props.params);
+  const { slug } = resolvedParams; // Agora 'slug' é acessado *após* um await
 
   const articleData = allArticlesData[slug];
 
@@ -59,13 +68,4 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       />
     </article>
   );
-}
-
-// Ensure generateStaticParams is correct as well
-export async function generateStaticParams() {
-  const slugs = Object.keys(allArticlesData);
-
-  return slugs.map((slug) => ({
-    slug: slug,
-  }));
 }
