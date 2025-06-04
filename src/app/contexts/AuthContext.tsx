@@ -30,13 +30,16 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: Omit<StoredUser, 'id' | 'role'> & {password: string}) => Promise<{ success: boolean, message?: string }>;
-  updateUserPreferences: (userId: string, preferences: { locationPreference?: string; subscribedAlerts?: AlertType[] }) => Promise<boolean>;
+  updateUserPreferences: (userId: string, preferences: { name?: string; locationPreference?: string; subscribedAlerts?: AlertType[] }) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const LOGGED_IN_USER_KEY = 'echoReportLoggedInUser_v3';
 const ADMIN_EMAIL = "admin@echoreport.com";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const STATIC_API_KEY = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -78,17 +81,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const apiKey = '1234';
-      const response = await fetch('http://localhost:8080/usuarios/login', {
+      const response = await fetch(`${API_BASE_URL}/usuarios/login`, { // USA API_BASE_URL
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
+          'X-API-Key': STATIC_API_KEY, // USA STATIC_API_KEY
         },
         body: JSON.stringify({ email: lowerEmail, password: pass }),
       });
 
       if (!response.ok) {
+        console.error("Falha no login da API:", response.status, await response.text().catch(() => ""));
         return false;
       }
       
@@ -129,8 +132,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userData: Omit<StoredUser, 'id' | 'role'> & { password: string }
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      const apiKey = '1234';
-
       const payload = {
         nomeCompleto: userData.name,
         email: userData.email,
@@ -139,24 +140,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         subscribedAlerts: userData.subscribedAlerts || [],
       };
 
-      const response = await fetch('http://localhost:8080/usuarios/registrar', {
+      const response = await fetch(`${API_BASE_URL}/usuarios/registrar`, { // USA API_BASE_URL
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
+          'X-API-Key': STATIC_API_KEY, // USA STATIC_API_KEY
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        let errorMessage = `Erro HTTP: ${response.status}`;
+        let backendErrorMessage = `Erro HTTP: ${response.status} (${response.statusText || 'Bad Request'})`;
         try {
-          const errorData = await response.text();
-          errorMessage = errorData || errorMessage;
-        } catch (_e) {
-          // Falha ao ler o corpo do erro, mantém a mensagem HTTP original
-        }
-        return { success: false, message: errorMessage };
+            const errorContentType = response.headers.get("content-type");
+            if (errorContentType && errorContentType.includes("application/json")) {
+                const errorData = await response.json();
+                if (errorData) {
+                    backendErrorMessage = errorData.message || errorData.title || errorData.detail || 
+                                         (errorData.violations && errorData.violations[0]?.message) || 
+                                         (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
+                }
+            } else {
+                const errorText = await response.text();
+                if (errorText) { backendErrorMessage = errorText; }
+            }
+        } catch (e) { /* Mantém errorMessage original */ }
+        return { success: false, message: backendErrorMessage };
       }
       return { success: true };
 
@@ -172,12 +181,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const updateUserPreferences = async (userId: string, preferences: { locationPreference?: string; subscribedAlerts?: AlertType[] }): Promise<boolean> => {
+  const updateUserPreferences = async (
+    userId: string, 
+    preferences: { name?: string; locationPreference?: string; subscribedAlerts?: AlertType[] }
+  ): Promise<boolean> => {
+    // ATENÇÃO: Esta função precisa ser implementada para chamar sua API backend
+    // para que as mudanças de preferência (e nome) sejam persistidas.
+    console.warn("updateUserPreferences chamado, mas não está implementado para chamar a API backend.");
+    
+    // Lógica atual que só atualiza localmente:
     if (user && user.id === userId) {
-      const updatedUser = { ...user, ...preferences };
-      setUser(updatedUser);
-      localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(updatedUser));
-      return true;
+      const updatedUserData: StoredUser = { 
+        ...user,
+        name: preferences.name !== undefined ? preferences.name : user.name,
+        locationPreference: preferences.locationPreference !== undefined ? preferences.locationPreference : user.locationPreference,
+        subscribedAlerts: preferences.subscribedAlerts !== undefined ? preferences.subscribedAlerts : user.subscribedAlerts,
+      };
+      setUser(updatedUserData);
+      localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(updatedUserData));
+      // Para um teste de UI, retornar true aqui pode ser suficiente,
+      // mas para persistência real, o sucesso dependeria da resposta da API.
+      return true; 
     }
     return false;
   };
