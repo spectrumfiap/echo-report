@@ -1,120 +1,39 @@
-import ArticleLayout from './../../components/ArticleLayout';
-import AnimatedSection from './../../components/AnimatedSection';
-import { notFound } from 'next/navigation';
-import type { Metadata } from 'next';
+import React from 'react';
 
-interface Article {
-  slug: string;
-  title: string;
-  category: string;
-  publicationDate: string;
-  authorName: string;
-  authorImageUrl: string;
-  heroImageUrl: string;
-  heroImageAlt: string;
-  summary: string;
-  htmlContent: string;
-}
-
-const allArticlesData: { [key: string]: Article } = {
-  'guia-preparacao-enchentes': {
-    slug: 'guia-preparacao-enchentes',
-    title: 'Guia Completo: Como se Preparar para Enchentes',
-    category: 'Prevenção e Segurança',
-    publicationDate: '2025-05-31',
-    authorName: 'Arthur Thomas',
-    authorImageUrl: '/assets/Arthur.svg',
-    heroImageUrl: '/assets/artigo-enchente.jpg',
-    heroImageAlt: 'Rua residencial parcialmente inundada com carros submersos e água barrenta.',
-    summary: 'Um guia detalhado com medidas essenciais para proteger sua família e seu lar antes, durante e depois de inundações e alagamentos.',
-    htmlContent: `<p>Este é o conteúdo do artigo. Fique seguro durante enchentes!</p>`,
-  },
+const article = {
+  slug: 'guia-preparacao-enchentes',
+  title: 'Guia Completo: Como se Preparar para Enchentes',
+  category: 'Prevenção e Segurança',
+  publicationDate: '2025-05-31',
+  authorName: 'Arthur Thomas',
+  authorImageUrl: '/assets/Arthur.svg',
+  heroImageUrl: '/assets/artigo-enchente.jpg',
+  heroImageAlt: 'Rua residencial parcialmente inundada com carros submersos e água barrenta.',
+  summary:
+    'Um guia detalhado com medidas essenciais para proteger sua família e seu lar antes, durante e depois de inundações e alagamentos.',
+  htmlContent: `<p>Este é o conteúdo do artigo. Fique seguro durante enchentes!</p>`,
 };
 
-// Função para pegar o artigo baseado no slug
-async function getArticleData(slug: string): Promise<Article | null> {
-  return allArticlesData[slug] || null;
-}
-
-// Função para gerar metadata (SEO) baseada no slug
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = await getArticleData(params.slug);
-
-  if (!article) {
-    return {
-      title: 'Artigo Não Encontrado',
-      description: 'O artigo não foi encontrado.',
-    };
-  }
-
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const imageUrl = article.heroImageUrl ? new URL(article.heroImageUrl, baseUrl).toString() : undefined;
-  const pageDescription =
-    article.summary ||
-    article.htmlContent.substring(0, 160).replace(/<[^>]*>?/gm, '').trim() + '...';
-
-  return {
-    title: `${article.title} | Blog Echo Report`,
-    description: pageDescription,
-    openGraph: {
-      title: article.title,
-      description: pageDescription,
-      images: imageUrl ? [{ url: imageUrl }] : [],
-      type: 'article',
-      publishedTime: article.publicationDate,
-      authors: article.authorName ? [article.authorName] : [],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: article.title,
-      description: pageDescription,
-      images: imageUrl ? [imageUrl] : [],
-    },
-  };
-}
-
-// Página do artigo - o Next já passa o slug direto aqui via params automático (para route segments)
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = await getArticleData(params.slug);
-
-  if (!article) {
-    notFound();
-  }
-
+export default function ArticlePage() {
   return (
-    <AnimatedSection animationType="fadeInUp" delay="duration-300" threshold={0.1}>
-      <ArticleLayout
-        title={article.title}
-        category={article.category}
-        publicationDate={new Date(article.publicationDate + 'T00:00:00').toLocaleDateString('pt-BR', {
+    <article>
+      <h1>{article.title}</h1>
+      <p>
+        <strong>Categoria:</strong> {article.category}
+      </p>
+      <p>
+        <strong>Publicado em:</strong>{' '}
+        {new Date(article.publicationDate).toLocaleDateString('pt-BR', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
         })}
-        authorName={article.authorName}
-        authorImageUrl={article.authorImageUrl}
-        heroImageUrl={article.heroImageUrl}
-        heroImageAlt={article.heroImageAlt}
-        slug={article.slug}
-      >
-        <div
-          className="prose lg:prose-lg max-w-none
-            prose-p:text-slate-800 dark:prose-p:text-slate-300
-            prose-headings:text-[var(--brand-header-bg)] dark:prose-headings:text-blue-400
-            prose-strong:text-slate-900 dark:prose-strong:text-slate-100
-            prose-ul:text-slate-700 dark:prose-ul:text-slate-300
-            prose-li:marker:text-[var(--brand-header-bg)] dark:prose-li:marker:text-blue-400
-            prose-blockquote:border-[var(--brand-header-bg)] dark:prose-blockquote:border-blue-500
-            prose-blockquote:text-slate-700 dark:prose-blockquote:text-slate-300
-            prose-a:text-[var(--brand-header-bg)] dark:prose-a:text-blue-400 hover:prose-a:text-opacity-80"
-          dangerouslySetInnerHTML={{ __html: article.htmlContent }}
-        />
-      </ArticleLayout>
-    </AnimatedSection>
+      </p>
+      <p>
+        <strong>Autor:</strong> {article.authorName}
+      </p>
+      <img src={article.heroImageUrl} alt={article.heroImageAlt} />
+      <div dangerouslySetInnerHTML={{ __html: article.htmlContent }} />
+    </article>
   );
-}
-
-// Gerar os slugs para Static Site Generation
-export async function generateStaticParams() {
-  return Object.keys(allArticlesData).map((slug) => ({ slug }));
 }
