@@ -89,8 +89,14 @@ export default function GerenciarUsuariosPage() {
       }
       const apiUsers: ApiUser[] = await response.json();
       setUsers(apiUsers.map(mapApiUserToUserData));
-    } catch (error: any) {
-      setNotification({ type: 'error', message: error.message || 'Falha ao carregar usuários.' });
+    } catch (error: unknown) { // CORRIGIDO: De any para unknown
+      let errorMessage = 'Falha ao carregar usuários.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message: string }).message === 'string') {
+        errorMessage = (error as { message: string }).message;
+      }
+      setNotification({ type: 'error', message: errorMessage });
       setUsers([]);
     } finally {
       setIsLoading(false);
@@ -178,27 +184,39 @@ export default function GerenciarUsuariosPage() {
       const actionText = modalAction === 'add' ? 'adicionado' : 'atualizado';
       setNotification({ type: 'success', message: `Usuário ${actionText} com sucesso!` });
       fetchUsers(); closeModal();
-    } catch (error: any) {
-      setNotification({ type: 'error', message: error.message || `Falha ao ${modalAction === 'add' ? 'adicionar' : 'atualizar'} usuário.` });
+    } catch (error: unknown) { // CORRIGIDO: De any para unknown
+      let errorMessage = `Falha ao ${modalAction === 'add' ? 'adicionar' : 'atualizar'} usuário.`;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message: string }).message === 'string') {
+        errorMessage = (error as { message: string }).message;
+      }
+      setNotification({ type: 'error', message: errorMessage });
     } finally { setIsSubmittingModal(false); }
   };
 
   const handleRemover = async (userId: string, userName: string) => {
     if (window.confirm(`Tem certeza que deseja remover o usuário "${userName}"?`)) {
-      setNotification(null); setIsLoading(true); 
+      setNotification(null); setIsLoading(true);
       try {
         const response = await fetch(`${API_BASE_URL}/usuarios/${userId}`, {
           method: 'DELETE', headers: { 'X-API-Key': STATIC_API_KEY },
         });
         if (!response.ok) {
           let errorMsg = `Erro ${response.status}`;
-          try { const data = await response.json(); errorMsg = data.message || data.entity || errorMsg; } catch(e){}
+          try { const data = await response.json(); errorMsg = data.message || data.entity || errorMsg; } catch{} // CORRIGIDO: Removido 'e' inutilizado
           throw new Error(errorMsg);
         }
         setNotification({ type: 'success', message: `Usuário "${userName}" removido.` });
         fetchUsers();
-      } catch (error: any) {
-        setNotification({ type: 'error', message: error.message || 'Falha ao remover.' });
+      } catch (error: unknown) { // CORRIGIDO: De any para unknown
+        let errorMessage = 'Falha ao remover.';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message: string }).message === 'string') {
+          errorMessage = (error as { message: string }).message;
+        }
+        setNotification({ type: 'error', message: errorMessage });
       } finally { setIsLoading(false); }
     }
   };
@@ -211,7 +229,7 @@ export default function GerenciarUsuariosPage() {
     const statusMatch = filterStatus ? user.status === filterStatus : true;
     return (nameMatch || emailMatch) && roleMatch && statusMatch;
   });
-  
+
   const inputBaseClasses = "p-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] dark:focus:ring-blue-500 focus:border-[var(--brand-header-bg)] dark:focus:border-blue-500 sm:text-sm transition-colors";
   const inputBgTextClasses = "bg-[var(--brand-input-background)] text-[var(--brand-text-primary)] placeholder:text-slate-400 dark:placeholder:text-slate-500";
   const modalInputClasses = `mt-1 ${inputBaseClasses} ${inputBgTextClasses} w-full`;
@@ -220,7 +238,7 @@ export default function GerenciarUsuariosPage() {
   const modalCheckboxClasses = "h-4 w-4 text-[var(--brand-header-bg)] dark:text-blue-500 border-gray-300 dark:border-slate-600 rounded focus:ring-[var(--brand-header-bg)] dark:focus:ring-blue-500 bg-[var(--brand-input-background)] dark:checked:bg-blue-500 checked:bg-[var(--brand-header-bg)] focus:ring-offset-0";
 
 
-  if (!isAuthenticated || !isAdmin && typeof window !== 'undefined') {
+  if (!isAuthenticated || (!isAdmin && typeof window !== 'undefined')) {
     return <div className="container mx-auto p-6 text-center text-[var(--brand-text-secondary)]">Verificando permissões...</div>;
   }
   if (!isAdmin && !isLoading) {
@@ -243,10 +261,10 @@ export default function GerenciarUsuariosPage() {
           <p><strong>Pref. Localização:</strong> <span className="text-[var(--brand-text-primary)]">{selectedUser.locationPreference || 'N/A'}</span></p>
           <p><strong>Alertas Inscritos:</strong> <span className="text-[var(--brand-text-primary)]">{selectedUser.subscribedAlerts?.join(', ') || 'Nenhum'}</span></p>
            <div className="flex justify-end pt-4">
-            <button type="button" onClick={closeModal} className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-[var(--brand-card-background)] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 focus:ring-slate-500 dark:focus:ring-slate-400`}>
-              Fechar
-            </button>
-          </div>
+             <button type="button" onClick={closeModal} className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-[var(--brand-card-background)] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 focus:ring-slate-500 dark:focus:ring-slate-400`}>
+               Fechar
+             </button>
+           </div>
         </div>
       );
     } else if (modalAction === 'add' || modalAction === 'edit') {
@@ -342,26 +360,26 @@ export default function GerenciarUsuariosPage() {
           {notification.message}
         </div>
       )}
-      
+
       <section className="mb-8 p-4 sm:p-6 bg-[var(--brand-card-background)] rounded-lg shadow-[var(--shadow-subtle)]">
         <h2 className="text-xl font-semibold text-[var(--brand-text-primary)] mb-4">Filtros e Busca</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input type="text" placeholder="Buscar por nome ou email..." 
+          <input type="text" placeholder="Buscar por nome ou email..."
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
             className={`${inputBaseClasses} ${inputBgTextClasses} w-full`}
           />
-          <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} 
+          <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}
             className={`${inputBaseClasses} ${inputBgTextClasses} w-full appearance-none`}
           >
-            <option value="" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Todos os Papéis</option> 
-            <option value="user" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Usuário</option> 
+            <option value="" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Todos os Papéis</option>
+            <option value="user" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Usuário</option>
             <option value="admin" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Administrador</option>
           </select>
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
             className={`${inputBaseClasses} ${inputBgTextClasses} w-full appearance-none`}
           >
-            <option value="" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Todos os Status</option> 
-            <option value="ativo" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Ativo</option> 
+            <option value="" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Todos os Status</option>
+            <option value="ativo" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Ativo</option>
             <option value="inativo" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Inativo</option>
           </select>
         </div>
