@@ -1,32 +1,18 @@
 // src/app/blog/[slug]/page.tsx
 import React from 'react';
-// Use Next.js Image component for optimization
 import Image from 'next/image';
-import { allArticlesData, Article } from '@/lib/articles';
+import { allArticlesData, Article } from '@/lib/articles'; // Make sure this path is correct now (@/lib/articles or ../../lib/articles based on final decision)
 
-// This function will generate the static paths for your dynamic routes.
-// It replaces getStaticPaths from the Pages Router.
-export async function generateStaticParams() {
-  const slugs = Object.keys(allArticlesData);
+// REMOVE any custom interface for PageProps if you have one directly for this component.
+// The default way to type params directly in the function is more robust here.
 
-  return slugs.map((slug) => ({
-    slug: slug, // The key here must match the folder name: [slug]
-  }));
-}
-
-// The Page Component (a React Server Component by default in App Router)
-// It directly receives the params from the URL.
+// The React component for your article page
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
   const { slug } = params;
 
   const articleData = allArticlesData[slug];
 
-  // Handle case where article is not found (e.g., direct access to a non-existent slug)
-  // In Next.js App Router, you can use notFound() or render a custom 404 UI.
-  // For static generation, generateStaticParams already handles existing slugs.
   if (!articleData) {
-    // You could also `import { notFound } from 'next/navigation'; notFound();`
-    // to trigger the Next.js not-found page.
     return (
       <div className="container mx-auto px-4 py-8 max-w-3xl text-center text-red-500">
         <h1 className="text-3xl font-bold">Artigo não encontrado.</h1>
@@ -35,7 +21,6 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     );
   }
 
-  // Combine the slug with the article data to form the complete Article object
   const article: Article = {
     slug: slug,
     ...articleData,
@@ -60,14 +45,13 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <strong>Autor:</strong> <span className="font-medium text-gray-800">{article.authorName}</span>
         </p>
       </div>
-      {/* Use Next.js Image component for optimized images */}
       <Image
         src={article.heroImageUrl}
         alt={article.heroImageAlt}
-        width={1200} // Provide intrinsic width
-        height={500} // Provide intrinsic height
+        width={1200}
+        height={500}
         className="w-full h-auto object-cover rounded-lg shadow-md mb-8"
-        priority // Load this image with high priority (usually for hero images)
+        priority
       />
       <div
         className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
@@ -77,6 +61,11 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   );
 }
 
-// Optional: Revalidate data at a specific interval (Incremental Static Regeneration)
-// If you want to fetch new data from the server after a certain time, you can set revalidate.
-// export const revalidate = 60; // Revalidate every 60 seconds
+// Ensure generateStaticParams is correct as well
+export async function generateStaticParams() {
+  const slugs = Object.keys(allArticlesData);
+
+  return slugs.map((slug) => ({
+    slug: slug,
+  }));
+}
