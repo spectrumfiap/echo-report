@@ -42,11 +42,11 @@ type Props = {
   };
 };
 
-// generateMetadata com tipagem correta
+// ✅ Corrigido: generateMetadata com o tipo Props
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = params;
-
   const article = await getArticleData(slug);
+
   if (!article) {
     return {
       title: 'Artigo Não Encontrado',
@@ -55,8 +55,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const imageUrl = article.heroImageUrl ? new URL(article.heroImageUrl, baseUrl).toString() : undefined;
-  const pageDescription = article.summary || article.htmlContent.substring(0, 160).replace(/<[^>]*>?/gm, '').trim() + '...';
+  const imageUrl = article.heroImageUrl
+    ? new URL(article.heroImageUrl, baseUrl).toString()
+    : undefined;
+
+  const pageDescription =
+    article.summary ||
+    article.htmlContent
+      .substring(0, 160)
+      .replace(/<[^>]*>?/gm, '')
+      .trim() + '...';
 
   return {
     title: `${article.title} | Blog Echo Report`,
@@ -78,7 +86,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// Página do artigo
+// ✅ Corrigido: página do artigo
 export default async function ArticlePage({ params }: Props) {
   const article = await getArticleData(params.slug);
 
@@ -119,6 +127,7 @@ export default async function ArticlePage({ params }: Props) {
   );
 }
 
+// ✅ Corrigido: Retornar formato com "params" para bater com o tipo Props
 export async function generateStaticParams(): Promise<{ params: { slug: string } }[]> {
   const slugs = Object.keys(allArticlesData);
   return slugs.map((slug) => ({
