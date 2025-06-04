@@ -1,4 +1,3 @@
-// src/components/Header.tsx
 "use client";
 
 import Link from 'next/link';
@@ -6,7 +5,7 @@ import Image from 'next/image';
 import { useAuth } from '../contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
-import { ThemeSwitcher } from './ThemeSwitcher'; // Importe o ThemeSwitcher
+import { ThemeSwitcher } from './ThemeSwitcher';
 
 export default function Header() {
   const { isAuthenticated, isAdmin, logout } = useAuth();
@@ -23,7 +22,7 @@ export default function Header() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
+      if (window.innerWidth >= 1024) {
         setIsMenuOpen(false);
       }
     };
@@ -32,10 +31,9 @@ export default function Header() {
   }, []);
 
   const navLinkBaseClassName = "transition-colors";
-  // Ajuste para que o ThemeSwitcher possa usar a cor de texto do header
-  const desktopNavLinkClassName = `${navLinkBaseClassName} hover:text-[var(--brand-text-header)]/80`;
-  const mobileNavLinkClassName = `${navLinkBaseClassName} block px-3 py-2 rounded-md hover:bg-white/10 w-full text-left`;
-  const mobileAuthButtonClassName = `${navLinkBaseClassName} block w-full text-left px-3 py-2 rounded-md bg-white/20 hover:bg-white/30 text-center`;
+  const desktopNavLinkClassName = `${navLinkBaseClassName} hover:text-[var(--brand-text-header)]/80 text-base`;
+  const mobileNavLinkClassName = `${navLinkBaseClassName} block px-3 py-2 rounded-md hover:bg-white/10 w-full text-left text-base`;
+  const mobileAuthButtonClassName = `${navLinkBaseClassName} block w-full text-left px-3 py-2 rounded-md bg-white/20 hover:bg-white/30 text-center text-base`;
 
   return (
     <header className="bg-[var(--brand-header-bg)] text-[var(--brand-text-header)] shadow-lg sticky top-0 z-50">
@@ -44,20 +42,22 @@ export default function Header() {
           <Image
             src="/assets/echoreportlogo.png"
             alt="EchoReport Logo"
-            width={70}
+            width={70} 
             height={35}
             priority
+            style={{ width: 'auto', height: 'auto' }} 
           />
           <div className="h-8 w-px bg-white/50 mx-3"></div>
           <Image
             src="/assets/fiapwhite.png"
             alt="FIAP Logo"
-            width={60}
+            width={60} 
             height={30}
+            style={{ width: 'auto', height: 'auto' }}
           />
         </Link>
 
-        <nav className="hidden md:flex items-center space-x-4 lg:space-x-5 text-sm font-medium">
+        <nav className="hidden lg:flex items-center space-x-4 lg:space-x-6 text-base font-medium">
           <Link href="/mapa" className={desktopNavLinkClassName}>Mapa</Link>
           <Link href="/reportar" className={desktopNavLinkClassName}>Reportar</Link>
           <Link href="/alertas" className={desktopNavLinkClassName}>Alertas</Link>
@@ -90,18 +90,16 @@ export default function Header() {
               <Link href="/login" className={desktopNavLinkClassName}>
                 Login
               </Link>
-              <Link href="/registro" className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-md transition-colors text-sm">
-                Registrar
+              <Link href="/registro" className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-md transition-colors text-base">
+                Registrar {/* << GARANTA QUE ESTEJA ASSIM, SEM CHAVES OU ESPAÇOS EXTRAS */}
               </Link>
             </>
           )}
-          {/* Adiciona o ThemeSwitcher aqui para desktop */}
-          <ThemeSwitcher className="hover:bg-white/10" />
+          <ThemeSwitcher className="hover:bg-white/10 p-1" />
         </nav>
 
-        <div className="md:hidden flex items-center flex-shrink-0 space-x-2">
-          {/* Adiciona o ThemeSwitcher aqui para mobile, antes do botão de menu */}
-          <ThemeSwitcher className="hover:bg-white/10" />
+        <div className="lg:hidden flex items-center flex-shrink-0 space-x-2">
+          <ThemeSwitcher className="hover:bg-white/10 p-1" />
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Abrir menu"
@@ -109,18 +107,17 @@ export default function Header() {
             className="p-2 rounded-md hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
           >
             {isMenuOpen ? (
-              <XMarkIcon className="h-6 w-6" />
+              <XMarkIcon className="h-7 w-7" /> 
             ) : (
-              <Bars3Icon className="h-6 w-6" />
+              <Bars3Icon className="h-7 w-7" /> 
             )}
           </button>
         </div>
       </div>
 
-      {/* Menu Mobile Dropdown */}
       <div
         className={`
-          md:hidden absolute top-full left-0 right-0 bg-[var(--brand-header-bg)] shadow-xl border-t border-white/20 overflow-hidden
+          lg:hidden absolute top-full left-0 right-0 bg-[var(--brand-header-bg)] shadow-xl border-t border-white/20 overflow-hidden
           transition-all duration-300 ease-in-out
           ${isMenuOpen ? 'max-h-screen opacity-100 pb-4' : 'max-h-0 opacity-0'}
         `}
@@ -159,16 +156,10 @@ export default function Header() {
                 Login
               </Link>
               <Link href="/registro" className={mobileAuthButtonClassName} onClick={handleLinkClick}>
-                Registrar
+                Registrar {/* << GARANTA QUE ESTEJA ASSIM, SEM CHAVES OU ESPAÇOS EXTRAS */}
               </Link>
             </>
           )}
-          {/* O ThemeSwitcher já foi adicionado acima para mobile, ao lado do botão de menu.
-              Se preferir que ele seja um item DENTRO do menu dropdown, mova-o para cá:
-          <div className="px-3 py-2">
-             <ThemeSwitcher className="hover:bg-white/10 w-full justify-start" />
-          </div>
-          */}
         </nav>
       </div>
     </header>

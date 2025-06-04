@@ -1,4 +1,3 @@
-// src/app/(admin)/colaborador/reportes/page.tsx (ou caminho similar)
 "use client";
 
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
@@ -113,15 +112,219 @@ export default function GerenciarReportesPage() {
     setFilteredReports(currentReports);
   }, [reports, searchTerm, selectedEventType, selectedStatus]);
 
-  const fetchReportByIdForModal = async (id: string): Promise<ApiReport | null> => { /* ... (código inalterado) ... */ return null; };
-  const openModalForViewEdit = async (reportId: string) => { /* ... (código inalterado) ... */ };
-  const openModalForAddAdminReport = () => { /* ... (código inalterado) ... */ };
-  const closeModal = () => { /* ... (código inalterado) ... */ };
-  const handleModalFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { /* ... (código inalterado) ... */ };
-  const handleModalFormImageChange = (event: React.ChangeEvent<HTMLInputElement>) => { /* ... (código inalterado) ... */ };
-  const handleModalFormSubmit = async () => { /* ... (código inalterado) ... */ };
-  const handleMudarStatusRapido = async (reportId: string, newStatus: ReportStatus) => { /* ... (código inalterado) ... */ };
-  const handleRemover = async (reportId: string) => { /* ... (código inalterado) ... */ };
+  const fetchReportByIdForModal = async (id: string): Promise<ApiReport | null> => {
+    setIsLoading(true);
+    try {
+        const response = await fetch(`${API_BASE_URL}/reportes/${id}`, {
+            method: 'GET',
+            headers: { 'X-API-Key': STATIC_API_KEY, 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: `Erro ${response.status} ao buscar reporte ${id}` }));
+            throw new Error(errorData.message || `Erro ${response.status}`);
+        }
+        const report: ApiReport = await response.json();
+        return report;
+    } catch (error: any) {
+        setNotification({ type: 'error', message: `Falha ao carregar detalhes do reporte ${id}: ${error.message}` });
+        return null;
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const openModalForViewEdit = async (reportId: string) => {
+    const reportDetail = await fetchReportByIdForModal(reportId);
+    if (reportDetail) {
+      setModalMode('viewEdit');
+      setCurrentFormData({
+        id: String(reportDetail.id),
+        eventType: reportDetail.eventType,
+        location: reportDetail.location,
+        description: reportDetail.description,
+        reporterName: reportDetail.reporterName || '',
+        imageUrl: reportDetail.imageUrl || '',
+        reportTimestamp: reportDetail.reportTimestamp,
+        status: reportDetail.status || statusOptions[0],
+        severity: reportDetail.severity || severityOptions[0],
+        adminNotes: reportDetail.adminNotes || '',
+        imageFile: null,
+      });
+      setEditingReportOriginal(reportDetail);
+      setIsModalOpen(true);
+    }
+  };
+
+  const openModalForAddAdminReport = () => {
+    setModalMode('addAdminReport');
+    setCurrentFormData({
+      eventType: eventTypeOptions[0] || '',
+      location: '',
+      description: '',
+      reporterName: user?.name || 'Admin',
+      status: statusOptions[0] as ReportStatus,
+      severity: severityOptions[0] as ReportSeverity,
+      adminNotes: '',
+      imageUrl: '',
+      imageFile: null,
+    });
+    setEditingReportOriginal(null);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalMode(null);
+    setCurrentFormData(null);
+    setEditingReportOriginal(null);
+    // Se você tiver uma ref para o input de arquivo, pode resetá-lo aqui também:
+    // ex: if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleModalFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    if (!currentFormData) return;
+    const { name, value } = e.target;
+    setCurrentFormData(prev => prev ? { ...prev, [name]: value } : null);
+  };
+
+  const handleModalFormImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!currentFormData) return;
+    const file = event.target.files ? event.target.files[0] : null;
+    setCurrentFormData(prev => prev ? { ...prev, imageFile: file } : null);
+    if (file) {
+        // Opcional: Preview da imagem ou mostrar nome do arquivo
+        // Se precisar limpar o URL da imagem se um arquivo for selecionado:
+        // setCurrentFormData(prev => prev ? { ...prev, imageUrl: '' } : null);
+    }
+  };
+
+  const handleModalFormSubmit = async () => {
+    if (!currentFormData || !modalMode) return;
+    setIsSubmittingModal(true);
+    setNotification(null);
+
+    const formDataToSubmit = new FormData();
+    let endpoint = `${API_BASE_URL}/reportes`;
+    let method = 'POST';
+
+    // Adiciona campos comuns ao FormData
+    formDataToSubmit.append('eventType', currentFormData.eventType);
+    formDataToSubmit.append('location', currentFormData.location);
+    formDataToSubmit.append('description', currentFormData.description);
+    formDataToSubmit.append('status', currentFormData.status);
+    formDataToSubmit.append('severity', currentFormData.severity);
+    if (currentFormData.adminNotes) formDataToSubmit.append('adminNotes', currentFormData.adminNotes);
+
+
+    if (modalMode === 'addAdminReport') {
+        // Para adicionar, o reporterName é o do admin logado ou o inserido
+        formDataToSubmit.append('reporterName', currentFormData.reporterName || (user?.name || "Admin"));
+        // Para adicionar, o userId pode ser o do admin logado
+        if (user?.id) formDataToSubmit.append('userId', String(user.id));
+        if (currentFormData.imageFile) {
+            formDataToSubmit.append('imageFile', currentFormData.imageFile);
+        } else if (currentFormData.imageUrl) {
+            // Se a API suportar envio de URL de imagem na criação
+            formDataToSubmit.append('imageUrl', currentFormData.imageUrl);
+        }
+    } else if (modalMode === 'viewEdit' && currentFormData.id) {
+        endpoint = `${API_BASE_URL}/reportes/${currentFormData.id}`;
+        method = 'PUT'; // ou PATCH, dependendo da sua API
+        // Para editar, não alteramos o reporterName ou userId originais via este formulário,
+        // a menos que seja uma funcionalidade específica.
+        // A API deve decidir como lidar com reporterName/userId na atualização.
+        // Se o nome do reportador original for anônimo e foi editado, podemos enviar.
+        if (editingReportOriginal?.reporterName === "Anônimo" && currentFormData.reporterName && currentFormData.reporterName !== "Anônimo") {
+            formDataToSubmit.append('reporterName', currentFormData.reporterName);
+        }
+        // Se a API permitir atualizar a imagem via URL no PUT/PATCH
+        if (currentFormData.imageUrl !== editingReportOriginal?.imageUrl) {
+             formDataToSubmit.append('imageUrl', currentFormData.imageUrl || '');
+        }
+        // Importante: A API precisa ser capaz de lidar com FormData para PUT/PATCH
+        // ou você precisará enviar JSON e tratar o upload de imagem separadamente se houver nova imagem.
+        // Se for enviar JSON e tiver uma imagem nova, precisaria de um endpoint específico para upload
+        // ou uma lógica mais complexa aqui. Para simplicidade, este exemplo assume que PUT aceita FormData
+        // ou que não há upload de nova imagem na edição (apenas mudança de URL).
+    }
+
+    try {
+        const response = await fetch(endpoint, {
+            method: method,
+            headers: { 'X-API-Key': STATIC_API_KEY }, // Content-Type é definido automaticamente pelo FormData
+            body: formDataToSubmit,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
+            throw new Error(errorData.message || `Falha ao ${modalMode === 'addAdminReport' ? 'adicionar' : 'atualizar'} reporte.`);
+        }
+
+        setNotification({ type: 'success', message: `Reporte ${modalMode === 'addAdminReport' ? 'adicionado' : 'atualizado'} com sucesso!` });
+        closeModal();
+        fetchReports(); // Re-busca os reportes para atualizar a lista
+    } catch (error: any) {
+        setNotification({ type: 'error', message: error.message });
+    } finally {
+        setIsSubmittingModal(false);
+    }
+  };
+
+  const handleMudarStatusRapido = async (reportId: string, newStatus: ReportStatus) => {
+    setIsLoading(true); // Pode usar um loading específico para a linha/botão
+    setNotification(null);
+    try {
+        const response = await fetch(`${API_BASE_URL}/reportes/${reportId}/status`, {
+            method: 'PATCH', // Ou PUT, dependendo da sua API
+            headers: {
+                'X-API-Key': STATIC_API_KEY,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: newStatus }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
+            throw new Error(errorData.message || 'Falha ao atualizar status do reporte.');
+        }
+        setNotification({ type: 'success', message: `Status do reporte ${reportId} atualizado para ${newStatus.replace('_', ' ')}.` });
+        fetchReports(); // Re-busca para refletir a mudança
+    } catch (error: any) {
+        setNotification({ type: 'error', message: error.message });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const handleRemover = async (reportId: string) => {
+    if (!window.confirm(`Tem certeza que deseja remover o reporte ID ${reportId}? Esta ação não pode ser desfeita.`)) {
+        return;
+    }
+    setIsLoading(true); // Pode usar um loading específico
+    setNotification(null);
+    try {
+        const response = await fetch(`${API_BASE_URL}/reportes/${reportId}`, {
+            method: 'DELETE',
+            headers: { 'X-API-Key': STATIC_API_KEY },
+        });
+
+        if (!response.ok) {
+            // Se o backend não retorna JSON no DELETE, mas um texto de erro.
+            if (response.status === 204 || response.headers.get("content-length") === "0") {
+                 // Sucesso, mas sem conteúdo. Algumas APIs retornam 204 para DELETE.
+            } else {
+                const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
+                throw new Error(errorData.message || 'Falha ao remover o reporte.');
+            }
+        }
+        setNotification({ type: 'success', message: `Reporte ID ${reportId} removido com sucesso.` });
+        fetchReports(); // Re-busca os reportes
+    } catch (error: any) {
+        setNotification({ type: 'error', message: error.message });
+    } finally {
+        setIsLoading(false);
+    }
+  };
 
   const handleClearFilters = () => {
     setSearchTerm(''); setSelectedEventType(''); setSelectedStatus('');
@@ -139,7 +342,7 @@ export default function GerenciarReportesPage() {
   if (!isAdmin && !isLoading && typeof window !== 'undefined') {
     router.push('/'); return null;
   }
-  
+   
   const getStatusBadgeClass = (status: ReportStatus) => {
     switch (status) {
         case 'novo': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300';
@@ -155,7 +358,7 @@ export default function GerenciarReportesPage() {
     if (!currentFormData) return null;
     const originalDataForDisplay = modalMode === 'viewEdit' ? editingReportOriginal : null;
     return (
-      <div className="space-y-3 text-sm text-[var(--brand-text-secondary)] max-h-[75vh] overflow-y-auto pr-2">
+      <form onSubmit={(e) => { e.preventDefault(); handleModalFormSubmit(); }} className="space-y-3 text-sm text-[var(--brand-text-secondary)] max-h-[75vh] overflow-y-auto pr-2">
         {(modalMode === 'viewEdit' && originalDataForDisplay?.id) && (
           <p><strong>ID do Reporte:</strong> <span className="text-[var(--brand-text-primary)]">{originalDataForDisplay.id}</span></p>
         )}
@@ -235,12 +438,12 @@ export default function GerenciarReportesPage() {
             Cancelar
           </button>
           {(modalMode === 'viewEdit' || modalMode === 'addAdminReport') && (
-            <button type="button" onClick={handleModalFormSubmit} disabled={isSubmittingModal || isLoading} className={`px-4 py-2 text-sm font-medium text-white rounded-md hover:bg-opacity-80 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-[var(--brand-header-bg)] dark:bg-blue-600 dark:hover:bg-blue-500 focus:ring-[var(--brand-header-bg)] dark:focus:ring-blue-500 dark:focus:ring-offset-[var(--brand-card-background)]`}>
+            <button type="submit" disabled={isSubmittingModal || isLoading} className={`px-4 py-2 text-sm font-medium text-white rounded-md hover:bg-opacity-80 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-[var(--brand-header-bg)] dark:bg-blue-600 dark:hover:bg-blue-500 focus:ring-[var(--brand-header-bg)] dark:focus:ring-blue-500 dark:focus:ring-offset-[var(--brand-card-background)]`}>
               {isSubmittingModal ? "Salvando..." : (modalMode === 'addAdminReport' ? "Adicionar Reporte" : "Salvar Alterações")}
             </button>
           )}
         </div>
-      </div>
+      </form>
     );
   };
 
@@ -255,7 +458,7 @@ export default function GerenciarReportesPage() {
             onClick={openModalForAddAdminReport}
             className="w-full sm:w-auto bg-[var(--brand-header-bg)] dark:bg-blue-600 text-[var(--brand-text-header)] dark:hover:bg-blue-500 font-semibold px-6 py-2.5 rounded-lg shadow-md hover:bg-opacity-80 transition-colors flex items-center justify-center">
             <PlusCircleIcon className="w-5 h-5 mr-2" />
-            Adicionar Report
+            Adicionar Reporte
           </button>
         </div>
         <p className="text-lg text-[var(--brand-text-secondary)] mt-4">
@@ -302,11 +505,11 @@ export default function GerenciarReportesPage() {
       </section>
 
       <section className="bg-[var(--brand-card-background)] rounded-lg shadow-[var(--shadow-subtle)] overflow-x-auto">
-        {isLoading ? (
+        {isLoading && !isModalOpen ? ( // Ajustado para não mostrar carregando geral se o modal estiver aberto e carregando dados do modal
           <p className="text-center text-[var(--brand-text-secondary)] py-8">Carregando reportes...</p>
-        ) : reports.length === 0 ? (
+        ) : reports.length === 0 && !isLoading ? (
           <p className="text-center text-[var(--brand-text-secondary)] py-8">Nenhum reporte cadastrado no sistema.</p>
-        ) : filteredReports.length === 0 ? (
+        ) : filteredReports.length === 0 && !isLoading ? (
           <p className="text-center text-[var(--brand-text-secondary)] py-8">Nenhum reporte encontrado com os filtros aplicados.</p>
         ) : (
           <table className="min-w-full">
