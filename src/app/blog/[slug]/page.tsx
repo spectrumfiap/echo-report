@@ -1,7 +1,6 @@
-import ArticleLayout from '../../components/ArticleLayout';
-import AnimatedSection from '../../components/AnimatedSection';
+import ArticleLayout from './../../components/ArticleLayout';
+import AnimatedSection from './../../components/AnimatedSection';
 import { notFound } from 'next/navigation';
-import React from 'react';
 import type { Metadata } from 'next';
 
 interface Article {
@@ -32,19 +31,14 @@ const allArticlesData: { [key: string]: Article } = {
   },
 };
 
-function normalizeSlug(slug: string | string[]): string {
-  return Array.isArray(slug) ? slug.join('/') : slug;
+// Função para pegar o artigo baseado no slug
+async function getArticleData(slug: string): Promise<Article | null> {
+  return allArticlesData[slug] || null;
 }
 
-type Props = {
-  params: {
-    slug: string | string[];
-  };
-};
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const slug = normalizeSlug(params.slug);
-  const article = await getArticleData(slug);
+// Função para gerar metadata (SEO) baseada no slug
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const article = await getArticleData(params.slug);
 
   if (!article) {
     return {
@@ -55,13 +49,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const imageUrl = article.heroImageUrl ? new URL(article.heroImageUrl, baseUrl).toString() : undefined;
-
   const pageDescription =
     article.summary ||
-    article.htmlContent
-      .substring(0, 160)
-      .replace(/<[^>]*>?/gm, '')
-      .trim() + '...';
+    article.htmlContent.substring(0, 160).replace(/<[^>]*>?/gm, '').trim() + '...';
 
   return {
     title: `${article.title} | Blog Echo Report`,
@@ -83,13 +73,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-async function getArticleData(slug: string): Promise<Article | null> {
-  return allArticlesData[slug] || null;
-}
-
-export default async function ArticlePage({ params }: Props) {
-  const slug = normalizeSlug(params.slug);
-  const article = await getArticleData(slug);
+// Página do artigo - o Next já passa o slug direto aqui via params automático (para route segments)
+export default async function ArticlePage({ params }: { params: { slug: string } }) {
+  const article = await getArticleData(params.slug);
 
   if (!article) {
     notFound();
@@ -109,18 +95,18 @@ export default async function ArticlePage({ params }: Props) {
         authorImageUrl={article.authorImageUrl}
         heroImageUrl={article.heroImageUrl}
         heroImageAlt={article.heroImageAlt}
-        slug={slug}
+        slug={article.slug}
       >
         <div
           className="prose lg:prose-lg max-w-none
-                   prose-p:text-slate-800 dark:prose-p:text-slate-300
-                   prose-headings:text-[var(--brand-header-bg)] dark:prose-headings:text-blue-400
-                   prose-strong:text-slate-900 dark:prose-strong:text-slate-100
-                   prose-ul:text-slate-700 dark:prose-ul:text-slate-300
-                   prose-li:marker:text-[var(--brand-header-bg)] dark:prose-li:marker:text-blue-400
-                   prose-blockquote:border-[var(--brand-header-bg)] dark:prose-blockquote:border-blue-500
-                   prose-blockquote:text-slate-700 dark:prose-blockquote:text-slate-300
-                   prose-a:text-[var(--brand-header-bg)] dark:prose-a:text-blue-400 hover:prose-a:text-opacity-80"
+            prose-p:text-slate-800 dark:prose-p:text-slate-300
+            prose-headings:text-[var(--brand-header-bg)] dark:prose-headings:text-blue-400
+            prose-strong:text-slate-900 dark:prose-strong:text-slate-100
+            prose-ul:text-slate-700 dark:prose-ul:text-slate-300
+            prose-li:marker:text-[var(--brand-header-bg)] dark:prose-li:marker:text-blue-400
+            prose-blockquote:border-[var(--brand-header-bg)] dark:prose-blockquote:border-blue-500
+            prose-blockquote:text-slate-700 dark:prose-blockquote:text-slate-300
+            prose-a:text-[var(--brand-header-bg)] dark:prose-a:text-blue-400 hover:prose-a:text-opacity-80"
           dangerouslySetInnerHTML={{ __html: article.htmlContent }}
         />
       </ArticleLayout>
@@ -128,9 +114,7 @@ export default async function ArticlePage({ params }: Props) {
   );
 }
 
-export async function generateStaticParams(): Promise<{ params: { slug: string } }[]> {
-  const slugs = Object.keys(allArticlesData);
-  return slugs.map((slug) => ({
-    params: { slug },
-  }));
+// Gerar os slugs para Static Site Generation
+export async function generateStaticParams() {
+  return Object.keys(allArticlesData).map((slug) => ({ slug }));
 }
