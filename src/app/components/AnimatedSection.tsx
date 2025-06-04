@@ -1,3 +1,5 @@
+// seu-projeto/components/AnimatedSection.tsx (ou onde quer que esteja seu arquivo)
+
 "use client";
 
 import React, { ReactNode, Children, cloneElement, isValidElement } from 'react';
@@ -13,7 +15,8 @@ interface ChildProps {
 export interface AnimatedSectionProps {
   children: ReactNode;
   className?: string;
-  animationType?: 'fadeInUp' | 'fadeIn' | 'slideInLeft' | 'slideInRight';
+  // CORREÇÃO AQUI: Adicionado 'fadeInDown' à lista de tipos
+  animationType?: 'fadeInUp' | 'fadeIn' | 'slideInLeft' | 'slideInRight' | 'fadeInDown';
   delay?: string;
   threshold?: number;
   staggerChildren?: boolean;
@@ -35,27 +38,32 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = ({
   });
 
   const baseAnimationClasses = 'transition-all ease-out ' + delay;
-  
+
   let effectInitialStyles: React.CSSProperties = {};
   let effectInViewStyles: React.CSSProperties = {};
 
   switch (animationType) {
-    case 'fadeIn': 
-      effectInitialStyles = { opacity: 0 }; 
-      effectInViewStyles = { opacity: 1 }; 
+    case 'fadeIn':
+      effectInitialStyles = { opacity: 0 };
+      effectInViewStyles = { opacity: 1 };
       break;
-    case 'slideInLeft': 
-      effectInitialStyles = { opacity: 0, transform: 'translateX(-40px)' }; 
-      effectInViewStyles = { opacity: 1, transform: 'translateX(0)' }; 
+    case 'slideInLeft':
+      effectInitialStyles = { opacity: 0, transform: 'translateX(-40px)' };
+      effectInViewStyles = { opacity: 1, transform: 'translateX(0)' };
       break;
-    case 'slideInRight': 
-      effectInitialStyles = { opacity: 0, transform: 'translateX(40px)' }; 
-      effectInViewStyles = { opacity: 1, transform: 'translateX(0)' }; 
+    case 'slideInRight':
+      effectInitialStyles = { opacity: 0, transform: 'translateX(40px)' };
+      effectInViewStyles = { opacity: 1, transform: 'translateX(0)' };
       break;
-    case 'fadeInUp': 
+    // NOVO CASO: Adicionar a lógica para 'fadeInDown'
+    case 'fadeInDown':
+      effectInitialStyles = { opacity: 0, transform: 'translateY(-20px)' }; // Começa um pouco acima
+      effectInViewStyles = { opacity: 1, transform: 'translateY(0)' };
+      break;
+    case 'fadeInUp':
     default:
-      effectInitialStyles = { opacity: 0, transform: 'translateY(20px)' }; 
-      effectInViewStyles = { opacity: 1, transform: 'translateY(0)' }; 
+      effectInitialStyles = { opacity: 0, transform: 'translateY(20px)' };
+      effectInViewStyles = { opacity: 1, transform: 'translateY(0)' };
       break;
   }
 
@@ -68,8 +76,8 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = ({
             const childProps = child.props;
             return cloneElement(child, {
               className: `${childProps.className || ''} ${baseAnimationClasses}`,
-              style: { 
-                ...childProps.style, 
+              style: {
+                ...childProps.style,
                 ...(inView ? effectInViewStyles : effectInitialStyles),
                 transitionDelay: inView ? `${index * childDelayIncrement}ms` : '0ms',
               },
@@ -81,14 +89,14 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = ({
     );
   }
 
-  return ( 
-    <div 
-      ref={ref} 
-      className={`${baseAnimationClasses} ${className}`} 
+  return (
+    <div
+      ref={ref}
+      className={`${baseAnimationClasses} ${className}`}
       style={inView ? effectInViewStyles : effectInitialStyles}
-    > 
-      {children} 
-    </div> 
+    >
+      {children}
+    </div>
   );
 };
 
