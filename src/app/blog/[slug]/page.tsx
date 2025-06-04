@@ -1,20 +1,46 @@
-// pages/artigos/[slug].tsx
+// src/app/blog/[slug]/page.tsx
 import React from 'react';
-import { GetStaticProps, GetStaticPaths } from 'next'; // For data fetching
-import { allArticlesData, Article } from '.../../../lib/articles'; // Adjust path to 
+// Use Next.js Image component for optimization
+import Image from 'next/image';
+// Import your article data and type
+import { allArticlesData, Article } from '.../../../lib/articles'; // Adjust path based on your project structure
 
-// Define the props that this page component will receive
-interface ArticlePageProps {
-  article: Article;
+// This function will generate the static paths for your dynamic routes.
+// It replaces getStaticPaths from the Pages Router.
+export async function generateStaticParams() {
+  const slugs = Object.keys(allArticlesData);
+
+  return slugs.map((slug) => ({
+    slug: slug, // The key here must match the folder name: [slug]
+  }));
 }
 
-// The React component for your article page
-export default function ArticlePage({ article }: ArticlePageProps) {
-  // If for some reason the article is not passed (shouldn't happen with getStaticPaths),
-  // you might want to render a loading state or 404
-  if (!article) {
-    return <p>Artigo não encontrado.</p>;
+// The Page Component (a React Server Component by default in App Router)
+// It directly receives the params from the URL.
+export default async function ArticlePage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
+
+  const articleData = allArticlesData[slug];
+
+  // Handle case where article is not found (e.g., direct access to a non-existent slug)
+  // In Next.js App Router, you can use notFound() or render a custom 404 UI.
+  // For static generation, generateStaticParams already handles existing slugs.
+  if (!articleData) {
+    // You could also `import { notFound } from 'next/navigation'; notFound();`
+    // to trigger the Next.js not-found page.
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-3xl text-center text-red-500">
+        <h1 className="text-3xl font-bold">Artigo não encontrado.</h1>
+        <p>A página que você está procurando não existe.</p>
+      </div>
+    );
   }
+
+  // Combine the slug with the article data to form the complete Article object
+  const article: Article = {
+    slug: slug,
+    ...articleData,
+  };
 
   return (
     <article className="container mx-auto px-4 py-8 max-w-3xl">
@@ -35,10 +61,14 @@ export default function ArticlePage({ article }: ArticlePageProps) {
           <strong>Autor:</strong> <span className="font-medium text-gray-800">{article.authorName}</span>
         </p>
       </div>
-      <img
+      {/* Use Next.js Image component for optimized images */}
+      <Image
         src={article.heroImageUrl}
         alt={article.heroImageAlt}
-        className="w-full h-80 object-cover rounded-lg shadow-md mb-8"
+        width={1200} // Provide intrinsic width
+        height={500} // Provide intrinsic height
+        className="w-full h-auto object-cover rounded-lg shadow-md mb-8"
+        priority // Load this image with high priority (usually for hero images)
       />
       <div
         className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
@@ -48,46 +78,6 @@ export default function ArticlePage({ article }: ArticlePageProps) {
   );
 }
 
-// --- Next.js Data Fetching Functions ---
-
-// getStaticPaths tells Next.js which paths (slugs) to pre-render at build time
-export const getStaticPaths: GetStaticPaths = async () => {
-  const slugs = Object.keys(allArticlesData); // Get all slugs from your data
-
-  // Map slugs to the format Next.js expects for paths
-  const paths = slugs.map((slug) => ({
-    params: { slug }, // The 'slug' here must match the [slug] in the filename
-  }));
-
-  return {
-    paths,
-    fallback: false, // Set to 'blocking' or true if you expect new slugs not present at build time
-                    // 'false' means any path not returned by getStaticPaths will result in a 404
-  };
-};
-
-// getStaticProps fetches data for each individual page at build time
-export const getStaticProps: GetStaticProps<ArticlePageProps> = async ({ params }) => {
-  const slug = params?.slug as string; // Get the slug from the URL parameters
-
-  const articleData = allArticlesData[slug];
-
-  if (!articleData) {
-    // If article data is not found, return 404
-    return {
-      notFound: true,
-    };
-  }
-
-  // Combine the slug with the article data to form the complete Article object
-  const article: Article = {
-    slug: slug,
-    ...articleData,
-  };
-
-  return {
-    props: {
-      article,
-    },
-  };
-};
+// Optional: Revalidate data at a specific interval (Incremental Static Regeneration)
+// If you want to fetch new data from the server after a certain time, you can set revalidate.
+// export const revalidate = 60; // Revalidate every 60 seconds
