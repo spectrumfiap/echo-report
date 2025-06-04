@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlusCircleIcon, PencilSquareIcon, TrashIcon, EyeIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { useAuth, availableAlertTypes, AlertType } from './../../contexts/AuthContext';
+import { useAuth, availableAlertTypes, AlertType } from './../../contexts/AuthContext'; // Corrected path assumption for AuthContext
 
 interface ApiUser {
   userId: number;
@@ -104,14 +104,14 @@ export default function GerenciarUsuariosPage() {
       }
       const apiUsers: ApiUser[] = await response.json();
       setUsers(apiUsers.map(mapApiUserToUserData));
-    } catch (error: unknown) { // Line 92: Changed 'any' to 'unknown' and added robust error message extraction
+    } catch (error: unknown) {
       let message = 'Falha ao carregar usuários.';
       if (error instanceof Error) {
         message = error.message;
       } else if (typeof error === 'string') {
         message = error;
       } else {
-        message = 'Um erro inesperado ocorreu ao carregar usuários.'; // Fallback for truly unknown errors
+        message = 'Um erro inesperado ocorreu ao carregar usuários.';
       }
       setNotification({ type: 'error', message });
       setUsers([]);
@@ -148,13 +148,13 @@ export default function GerenciarUsuariosPage() {
     setUserFormData(null); setIsSubmittingModal(false);
   };
 
-  const handleFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { // Line 181: Explicitly typed 'e'
+  const handleFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     if (!userFormData) return;
     const { name, value } = e.target;
     setUserFormData({ ...userFormData, [name]: value });
   };
 
-  const handleSubscribedAlertsChange = (alertType: AlertType) => {
+  const handleSubscribedAlertsChange = (alertType: AlertType) => { // FIX: Added type 'AlertType' to 'alertType'
     if (!userFormData) return;
     setUserFormData(prev => {
       if (!prev) return null;
@@ -197,7 +197,7 @@ export default function GerenciarUsuariosPage() {
         if (userFormData.password && userFormData.password.length > 0) {
             payload.senha = userFormData.password;
         }
-        response = await fetch(`${API_BASE_URL}/usuarios/${userFormData.id}`, { // Fixed template literal syntax
+        response = await fetch(`${API_BASE_URL}/usuarios/${userFormData.id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
           body: JSON.stringify(payload),
         });
@@ -210,14 +210,14 @@ export default function GerenciarUsuariosPage() {
       const actionText = modalAction === 'add' ? 'adicionado' : 'atualizado';
       setNotification({ type: 'success', message: `Usuário ${actionText} com sucesso!` });
       fetchUsers(); closeModal();
-    } catch (error: unknown) { // Line 200: Changed 'any' to 'unknown' and added robust error message extraction
+    } catch (error: unknown) {
       let message = `Falha ao ${modalAction === 'add' ? 'adicionar' : 'atualizar'} usuário.`;
       if (error instanceof Error) {
         message = error.message;
       } else if (typeof error === 'string') {
         message = error;
       } else {
-        message = 'Um erro inesperado ocorreu ao processar o formulário.'; // Fallback for truly unknown errors
+        message = 'Um erro inesperado ocorreu ao processar o formulário.';
       }
       setNotification({ type: 'error', message });
     } finally { setIsSubmittingModal(false); }
@@ -227,7 +227,7 @@ export default function GerenciarUsuariosPage() {
     if (window.confirm(`Tem certeza que deseja remover o usuário "${userName}"?`)) {
       setNotification(null); setIsLoading(true); 
       try {
-        const response = await fetch(`${API_BASE_URL}/usuarios/${userId}`, { // Fixed template literal syntax
+        const response = await fetch(`${API_BASE_URL}/usuarios/${userId}`, {
           method: 'DELETE', headers: { 'X-API-Key': STATIC_API_KEY },
         });
         if (!response.ok) {
@@ -235,7 +235,7 @@ export default function GerenciarUsuariosPage() {
           try {
             const data = await response.json();
             errorMsg = data.message || data.entity || errorMsg;
-          } catch (_errorParsingJson: unknown) { // Line 195: Changed 'e' to '_errorParsingJson: unknown'
+          } catch (_errorParsingJson: unknown) {
             // This '_errorParsingJson' is intentionally unused here
             // as the outer catch block handles the primary error message.
           }
@@ -250,7 +250,7 @@ export default function GerenciarUsuariosPage() {
         } else if (typeof error === 'string') {
           message = error;
         } else {
-          message = 'Um erro inesperado ocorreu ao remover o usuário.'; // Fallback for truly unknown errors
+          message = 'Um erro inesperado ocorreu ao remover o usuário.';
         }
         setNotification({ type: 'error', message });
       } finally { setIsLoading(false); }
