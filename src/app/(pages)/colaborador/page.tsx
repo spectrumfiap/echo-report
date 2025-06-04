@@ -104,7 +104,7 @@ export default function GerenciarUsuariosPage() {
       }
       const apiUsers: ApiUser[] = await response.json();
       setUsers(apiUsers.map(mapApiUserToUserData));
-    } catch (error: unknown) { // Line 92: Changed 'any' to 'unknown'.
+    } catch (error: unknown) { // Line 92: Changed 'any' to 'unknown' and added robust error message extraction
       let message = 'Falha ao carregar usuários.';
       if (error instanceof Error) {
         message = error.message;
@@ -148,7 +148,7 @@ export default function GerenciarUsuariosPage() {
     setUserFormData(null); setIsSubmittingModal(false);
   };
 
-  const handleFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { // Line 181: Explicitly typed 'e'.
+  const handleFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { // Line 181: Explicitly typed 'e'
     if (!userFormData) return;
     const { name, value } = e.target;
     setUserFormData({ ...userFormData, [name]: value });
@@ -197,7 +197,7 @@ export default function GerenciarUsuariosPage() {
         if (userFormData.password && userFormData.password.length > 0) {
             payload.senha = userFormData.password;
         }
-        response = await fetch(`<span class="math-inline">\{API\_BASE\_URL\}/usuarios/</span>{userFormData.id}`, {
+        response = await fetch(`${API_BASE_URL}/usuarios/${userFormData.id}`, { // Fixed template literal syntax
           method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
           body: JSON.stringify(payload),
         });
@@ -210,7 +210,7 @@ export default function GerenciarUsuariosPage() {
       const actionText = modalAction === 'add' ? 'adicionado' : 'atualizado';
       setNotification({ type: 'success', message: `Usuário ${actionText} com sucesso!` });
       fetchUsers(); closeModal();
-    } catch (error: unknown) { // Line 200: Changed 'any' to 'unknown'.
+    } catch (error: unknown) { // Line 200: Changed 'any' to 'unknown' and added robust error message extraction
       let message = `Falha ao ${modalAction === 'add' ? 'adicionar' : 'atualizar'} usuário.`;
       if (error instanceof Error) {
         message = error.message;
@@ -227,7 +227,7 @@ export default function GerenciarUsuariosPage() {
     if (window.confirm(`Tem certeza que deseja remover o usuário "${userName}"?`)) {
       setNotification(null); setIsLoading(true); 
       try {
-        const response = await fetch(`<span class="math-inline">\{API\_BASE\_URL\}/usuarios/</span>{userId}`, {
+        const response = await fetch(`${API_BASE_URL}/usuarios/${userId}`, { // Fixed template literal syntax
           method: 'DELETE', headers: { 'X-API-Key': STATIC_API_KEY },
         });
         if (!response.ok) {
@@ -236,7 +236,7 @@ export default function GerenciarUsuariosPage() {
             const data = await response.json();
             errorMsg = data.message || data.entity || errorMsg;
           } catch (_errorParsingJson: unknown) { // Line 195: Changed 'e' to '_errorParsingJson: unknown'
-            // This 'e' (now '_errorParsingJson') is intentionally unused here
+            // This '_errorParsingJson' is intentionally unused here
             // as the outer catch block handles the primary error message.
           }
           throw new Error(errorMsg);
