@@ -172,8 +172,8 @@ async function getArticleData(slug: string): Promise<Article | null> {
   return allArticlesData[slug] || null;
 }
 
-export async function generateMetadata({ params: rawParams }: { params: { slug: string } }) {
-  const params = await Promise.resolve(rawParams); 
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  // Removed: const params = await Promise.resolve(rawParams);
   const { slug } = params;
 
   if (!slug || typeof slug !== 'string') {
@@ -203,7 +203,7 @@ export async function generateMetadata({ params: rawParams }: { params: { slug: 
       description: pageDescription,
       images: imageUrl ? [{ url: imageUrl }] : [],
       type: 'article',
-      publishedTime: article.publicationDate, 
+      publishedTime: article.publicationDate,
       authors: article.authorName ? [article.authorName] : [],
     },
     twitter: {
@@ -215,8 +215,8 @@ export async function generateMetadata({ params: rawParams }: { params: { slug: 
   };
 }
 
-export default async function ArticlePage({ params: rawParams }: { params: { slug: string } }) {
-  const params = await Promise.resolve(rawParams); 
+export default async function ArticlePage({ params }: { params: { slug: string } }) {
+  // Removed: const params = await Promise.resolve(rawParams);
   const article = await getArticleData(params.slug);
 
   if (!article) {
@@ -224,17 +224,17 @@ export default async function ArticlePage({ params: rawParams }: { params: { slu
   }
 
   const articleBody = (
-    <div 
-      className="prose lg:prose-lg max-w-none 
-                 prose-p:text-slate-800 dark:prose-p:text-slate-300 
-                 prose-headings:text-[var(--brand-header-bg)] dark:prose-headings:text-blue-400 
-                 prose-strong:text-slate-900 dark:prose-strong:text-slate-100
-                 prose-ul:text-slate-700 dark:prose-ul:text-slate-300 
-                 prose-li:marker:text-[var(--brand-header-bg)] dark:prose-li:marker:text-blue-400
-                 prose-blockquote:border-[var(--brand-header-bg)] dark:prose-blockquote:border-blue-500
-                 prose-blockquote:text-slate-700 dark:prose-blockquote:text-slate-300
-                 prose-a:text-[var(--brand-header-bg)] dark:prose-a:text-blue-400 hover:prose-a:text-opacity-80"
-      dangerouslySetInnerHTML={{ __html: article.htmlContent }} 
+    <div
+      className="prose lg:prose-lg max-w-none
+                   prose-p:text-slate-800 dark:prose-p:text-slate-300
+                   prose-headings:text-[var(--brand-header-bg)] dark:prose-headings:text-blue-400
+                   prose-strong:text-slate-900 dark:prose-strong:text-slate-100
+                   prose-ul:text-slate-700 dark:prose-ul:text-slate-300
+                   prose-li:marker:text-[var(--brand-header-bg)] dark:prose-li:marker:text-blue-400
+                   prose-blockquote:border-[var(--brand-header-bg)] dark:prose-blockquote:border-blue-500
+                   prose-blockquote:text-slate-700 dark:prose-blockquote:text-slate-300
+                   prose-a:text-[var(--brand-header-bg)] dark:prose-a:text-blue-400 hover:prose-a:text-opacity-80"
+      dangerouslySetInnerHTML={{ __html: article.htmlContent }}
     />
   );
 
