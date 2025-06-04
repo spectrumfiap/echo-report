@@ -1,8 +1,7 @@
-// src/components/MapDisplay.tsx
 "use client";
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { GoogleMap, Circle, DirectionsService, DirectionsRenderer, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, Circle, DirectionsRenderer, InfoWindow } from '@react-google-maps/api';
 
 interface RiskArea {
   id: string;
@@ -72,7 +71,7 @@ const AlertIcon = ({ riskLevel }: { riskLevel: RiskArea['riskLevel'] }) => {
 
 interface MapDisplayProps {
   isLoaded: boolean; 
-  loadError?: Error;  
+  loadError?: Error;   
   initialCenter?: google.maps.LatLngLiteral;
   riskAreasData?: RiskArea[];
   isDarkMode: boolean;
@@ -85,7 +84,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   riskAreasData = [],
   isDarkMode
 }) => {
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [_map, setMap] = useState<google.maps.Map | null>(null);
   const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null);
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
@@ -105,8 +104,8 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     setRouteRiskInfo(null);
   }, [directionsResponse]);
 
-  const onLoad = useCallback((mapInstance: google.maps.Map) => setMap(mapInstance), []);
-  const onUnmount = useCallback(() => setMap(null), []);
+  const onLoad = useCallback((mapInstance: google.maps.Map) => setMap(mapInstance), [setMap]);
+  const onUnmount = useCallback(() => setMap(null), [setMap]);
 
   const circleOptions = useMemo(() => (riskLevel: RiskArea['riskLevel']) => {
     const currentRiskColors = riskColors[riskLevel] || riskColors.baixo; 
@@ -195,8 +194,8 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       alert('Por favor, defina uma origem e um destino.'); return;
     }
     setDirectionsResponse(null); setSelectedRouteIndex(0); setRouteRiskInfo(null);
-    const directionsService = new window.google.maps.DirectionsService();
-    directionsService.route(
+    const directionsServiceInstance = new window.google.maps.DirectionsService();
+    directionsServiceInstance.route(
       {
         origin: origin, destination: destination,
         travelMode: window.google.maps.TravelMode.DRIVING,
@@ -316,9 +315,9 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
                 </p>
               )}
               {selectedRiskArea.type === 'predefined' && (
-                 <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     <strong className="font-medium text-slate-600 dark:text-slate-300">Nível de Risco Oficial:</strong> <span className="capitalize font-medium">{selectedRiskArea.riskLevel}</span>
-                 </p>
+                  </p>
               )}
               {selectedRiskArea.lastUpdated && (
                 <p className="text-xs text-slate-400 dark:text-slate-500 italic mt-2">

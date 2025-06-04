@@ -1,4 +1,3 @@
-// src/components/AnimatedSection.tsx
 "use client";
 
 import React, { ReactNode, Children, cloneElement, isValidElement } from 'react';
@@ -7,7 +6,8 @@ import { useInView } from 'react-intersection-observer';
 interface ChildProps {
   className?: string;
   style?: React.CSSProperties;
-  [key: string]: any;
+  children?: ReactNode;
+  [key: string]: unknown;
 }
 
 export interface AnimatedSectionProps {
@@ -36,8 +36,6 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = ({
 
   const baseAnimationClasses = 'transition-all ease-out ' + delay;
   
-  // Define os estilos iniciais e finais com base no animationType
-  // Estes serão usados tanto para o wrapper (se não for stagger) quanto para os filhos (se for stagger)
   let effectInitialStyles: React.CSSProperties = {};
   let effectInViewStyles: React.CSSProperties = {};
 
@@ -62,7 +60,7 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = ({
   }
 
   if (staggerChildren) {
-    const flatChildren = Children.toArray(children); // Desempacota React.Fragments
+    const flatChildren = Children.toArray(children);
     return (
       <div ref={ref} className={className}>
         {flatChildren.map((child, index) => {
@@ -77,13 +75,12 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = ({
               },
             });
           }
-          return child; // Retorna nós de texto, null, etc., como estão
+          return child;
         })}
       </div>
     );
   }
 
-  // Se não for staggerChildren, anima o wrapper principal
   return ( 
     <div 
       ref={ref} 

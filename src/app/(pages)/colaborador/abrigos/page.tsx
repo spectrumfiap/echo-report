@@ -1,7 +1,7 @@
-// src/app/(admin)/colaborador/gerenciar-abrigos/page.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { PlusCircleIcon, PencilSquareIcon, TrashIcon, EyeIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -20,7 +20,6 @@ interface ApiShelter {
 interface ShelterData {
   id: string; name: string; address: string; neighborhood: string; cityState: string;
   capacityStatus: string; statusOperacional: ShelterOperationalStatus; updatedAt: string;
-  // Adicionando campos que podem ser usados na visualização/filtro completo, se necessário
   zipCode?: string; contactPhone?: string; contactEmail?: string; 
   servicesOffered?: string[]; targetAudience?: string; operatingHours?: string;
   observations?: string; mapsUrl?: string; latitude?: number; longitude?: number;
@@ -33,6 +32,27 @@ interface ShelterFormData {
   capacityStatus: string; servicesOffered: string; targetAudience: string;
   operatingHours: string; observations?: string; mapsUrl?: string; latitude?: string; 
   longitude?: string; statusOperacional: ShelterOperationalStatus;
+}
+
+interface ShelterPayload {
+  id?: number;
+  name: string;
+  imageUrl?: string;
+  address: string;
+  neighborhood: string;
+  cityState: string;
+  zipCode?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  capacityStatus: string;
+  servicesOffered: string[];
+  targetAudience: string;
+  operatingHours: string;
+  observations?: string;
+  mapsUrl?: string;
+  latitude?: number;
+  longitude?: number;
+  statusOperacional: ShelterOperationalStatus;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
@@ -50,14 +70,13 @@ export default function GerenciarAbrigosPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState<'add' | 'edit' | 'view' | null>(null);
-  const [selectedShelterDetails, setSelectedShelterDetails] = useState<ApiShelter | null>(null); // Armazena todos os detalhes da API para visualização/edição
+  const [selectedShelterDetails, setSelectedShelterDetails] = useState<ApiShelter | null>(null);
   const [shelterFormData, setShelterFormData] = useState<ShelterFormData | null>(null);
   const [isSubmittingModal, setIsSubmittingModal] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<ShelterOperationalStatus | ''>('');
   const [filterCep, setFilterCep] = useState('');
-
 
   const mapApiShelterToShelterData = useCallback((apiShelter: ApiShelter): ShelterData => ({
     id: String(apiShelter.id),
@@ -95,8 +114,11 @@ export default function GerenciarAbrigosPage() {
       }
       const apiShelters: ApiShelter[] = await response.json();
       setShelters(apiShelters.map(mapApiShelterToShelterData).sort((a,b) => a.name.localeCompare(b.name)));
-    } catch (error: any) {
-      setNotification({ type: 'error', message: error.message || 'Falha ao carregar abrigos.' });
+    } catch (error: unknown) {
+      let message = 'Falha ao carregar abrigos.';
+      if (error instanceof Error) { message = error.message; } 
+      else if (typeof error === 'string') { message = error; }
+      setNotification({ type: 'error', message });
       setShelters([]);
     } finally { setIsLoading(false); }
   }, [isAdmin, mapApiShelterToShelterData]);
@@ -108,14 +130,16 @@ export default function GerenciarAbrigosPage() {
   }, [isAdmin, isAuthenticated, router, fetchShelters]);
 
   const fetchShelterById = async (id: string): Promise<ApiShelter | null> => {
-    // setIsLoading(true); // Evita piscar a tabela principal se o modal já estiver carregando
     try {
       const response = await fetch(`${API_BASE_URL}/abrigos/${id}`, { headers: { 'X-API-Key': STATIC_API_KEY } });
       if (!response.ok) throw new Error('Falha ao buscar dados detalhados do abrigo');
       return await response.json();
-    } catch (error: any) {
-      setNotification({ type: 'error', message: error.message }); return null;
-    } finally { /* setIsLoading(false); */ }
+    } catch (error: unknown) {
+      let message = 'Falha ao buscar dados detalhados do abrigo';
+      if (error instanceof Error) { message = error.message; } 
+      else if (typeof error === 'string') { message = error; }
+      setNotification({ type: 'error', message }); return null;
+    }
   };
 
   const openModal = async (action: 'add' | 'edit' | 'view', shelterId?: string) => {
@@ -143,7 +167,7 @@ export default function GerenciarAbrigosPage() {
           latitude: shelterDetails.latitude?.toString() || '', longitude: shelterDetails.longitude?.toString() || '',
           statusOperacional: shelterDetails.statusOperacional,
         });
-      } else { setIsModalOpen(false); } // Fecha modal se não conseguir carregar detalhes
+      } else { setIsModalOpen(false); }
     }
   };
 
@@ -161,19 +185,29 @@ export default function GerenciarAbrigosPage() {
   const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); if (!shelterFormData) return;
     setIsSubmittingModal(true); setNotification(null);
-    let payload: any = {
-      name: shelterFormData.name, imageUrl: shelterFormData.imageUrl || undefined, address: shelterFormData.address,
-      neighborhood: shelterFormData.neighborhood, cityState: shelterFormData.cityState, zipCode: shelterFormData.zipCode || undefined,
-      contactPhone: shelterFormData.contactPhone || undefined, contactEmail: shelterFormData.contactEmail || undefined,
+    
+    const payload: ShelterPayload = {
+      name: shelterFormData.name, 
+      imageUrl: shelterFormData.imageUrl || undefined, 
+      address: shelterFormData.address,
+      neighborhood: shelterFormData.neighborhood, 
+      cityState: shelterFormData.cityState, 
+      zipCode: shelterFormData.zipCode || undefined,
+      contactPhone: shelterFormData.contactPhone || undefined, 
+      contactEmail: shelterFormData.contactEmail || undefined,
       capacityStatus: shelterFormData.capacityStatus, 
       servicesOffered: shelterFormData.servicesOffered ? shelterFormData.servicesOffered.split(',').map(s => s.trim()).filter(s => s.length > 0) : [], 
-      targetAudience: shelterFormData.targetAudience, operatingHours: shelterFormData.operatingHours,
-      observations: shelterFormData.observations || undefined, mapsUrl: shelterFormData.mapsUrl || undefined,
+      targetAudience: shelterFormData.targetAudience, 
+      operatingHours: shelterFormData.operatingHours,
+      observations: shelterFormData.observations || undefined, 
+      mapsUrl: shelterFormData.mapsUrl || undefined,
       latitude: shelterFormData.latitude ? parseFloat(shelterFormData.latitude) : undefined,
       longitude: shelterFormData.longitude ? parseFloat(shelterFormData.longitude) : undefined,
       statusOperacional: shelterFormData.statusOperacional,
     };
+
     if (modalAction === 'edit' && shelterFormData.id) { payload.id = parseInt(shelterFormData.id); }
+    
     let response: Response;
     try {
       if (modalAction === 'add') {
@@ -185,6 +219,7 @@ export default function GerenciarAbrigosPage() {
           method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY }, body: JSON.stringify(payload),
         });
       } else { throw new Error("Ação de formulário inválida."); }
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
         throw new Error(errorData.message || errorData.entity || `Erro ${response.status}`);
@@ -192,8 +227,11 @@ export default function GerenciarAbrigosPage() {
       const actionText = modalAction === 'add' ? 'adicionado' : 'atualizado';
       setNotification({ type: 'success', message: `Abrigo ${actionText} com sucesso!` });
       fetchShelters(); closeModal();
-    } catch (error: any) {
-      setNotification({ type: 'error', message: error.message || `Falha ao ${modalAction === 'add' ? 'adicionar' : 'atualizar'} abrigo.` });
+    } catch (error: unknown) {
+      let message = `Falha ao ${modalAction === 'add' ? 'adicionar' : 'atualizar'} abrigo.`;
+      if (error instanceof Error) { message = error.message; }
+      else if (typeof error === 'string') { message = error; }
+      setNotification({ type: 'error', message });
     } finally { setIsSubmittingModal(false); }
   };
   
@@ -204,24 +242,27 @@ export default function GerenciarAbrigosPage() {
         const response = await fetch(`${API_BASE_URL}/abrigos/${shelterId}`, { method: 'DELETE', headers: { 'X-API-Key': STATIC_API_KEY } });
         if (!response.ok) {
           let errorMsg = `Erro ${response.status}`;
-          try { const data = await response.json(); errorMsg = data.message || data.entity || errorMsg; } catch(e){}
+          try { const data = await response.json(); errorMsg = data.message || data.entity || errorMsg; } catch(_e){}
           throw new Error(errorMsg);
         }
         setNotification({ type: 'success', message: `Abrigo "${shelterName}" removido.` });
         fetchShelters();
-      } catch (error: any) { setNotification({ type: 'error', message: error.message || 'Falha ao remover abrigo.' }); }
+      } catch (error: unknown) { 
+        let message = 'Falha ao remover abrigo.';
+        if (error instanceof Error) { message = error.message; }
+        else if (typeof error === 'string') { message = error; }
+        setNotification({ type: 'error', message }); 
+      }
     }
   };
 
   const filteredShelters = shelters.filter(shelter => {
     const searchTermLower = searchTerm.toLowerCase();
     const cepTerm = filterCep.trim();
-
     const nameMatch = shelter.name.toLowerCase().includes(searchTermLower);
     const neighborhoodMatch = shelter.neighborhood.toLowerCase().includes(searchTermLower);
     const statusMatch = filterStatus ? shelter.statusOperacional === filterStatus : true;
     const cepMatch = cepTerm ? shelter.zipCode?.replace(/\D/g, '').includes(cepTerm.replace(/\D/g, '')) : true;
-
     return (nameMatch || neighborhoodMatch) && statusMatch && cepMatch;
   });
   
@@ -234,8 +275,8 @@ export default function GerenciarAbrigosPage() {
     return <div className="container mx-auto p-6 text-center text-[var(--brand-text-secondary)]">Verificando permissões...</div>;
   }
   if (!isAdmin && !isLoading) {
-     router.push('/');
-     return <div className="container mx-auto p-6 text-center text-[var(--brand-text-secondary)]">Acesso negado. Redirecionando...</div>;
+      router.push('/');
+      return <div className="container mx-auto p-6 text-center text-[var(--brand-text-secondary)]">Acesso negado. Redirecionando...</div>;
   }
 
   const renderModalContent = () => {
@@ -245,7 +286,18 @@ export default function GerenciarAbrigosPage() {
       return (
         <div className="space-y-2 text-sm text-[var(--brand-text-secondary)] max-h-[70vh] overflow-y-auto pr-2">
           <h3 className="text-lg font-semibold text-[var(--brand-text-primary)] mb-3">{dataForView.name}</h3>
-          {dataForView.imageUrl && <img src={dataForView.imageUrl} alt={dataForView.name} className="max-w-full h-auto max-h-48 my-2 rounded-md border dark:border-slate-700 object-contain" />}
+          {dataForView.imageUrl && (
+            <div className="relative w-full max-w-xs h-48 my-2 mx-auto">
+              <Image
+                src={dataForView.imageUrl}
+                alt={dataForView.name}
+                layout="fill"
+                objectFit="contain"
+                className="rounded-md border dark:border-slate-700"
+                unoptimized={true}
+              />
+            </div>
+          )}
           <p><strong>ID:</strong> <span className="text-[var(--brand-text-primary)]">{dataForView.id}</span></p>
           <p><strong>Endereço:</strong> <span className="text-[var(--brand-text-primary)]">{`${dataForView.address}, ${dataForView.neighborhood}, ${dataForView.cityState} - CEP: ${dataForView.zipCode || 'N/A'}`}</span></p>
           <p><strong>Telefone:</strong> <span className="text-[var(--brand-text-primary)]">{dataForView.contactPhone || 'N/A'}</span></p>

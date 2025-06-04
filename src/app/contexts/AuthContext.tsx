@@ -1,10 +1,8 @@
-// src/app/contexts/AuthContext.tsx
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
-// ... (interfaces StoredUser, AlertType, availableAlertTypes, AuthContextType permanecem as mesmas)
 export const availableAlertTypes = [
   'Alagamentos',
   'Ventos Fortes',
@@ -40,7 +38,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LOGGED_IN_USER_KEY = 'echoReportLoggedInUser_v3';
 const ADMIN_EMAIL = "admin@echoreport.com";
 
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<StoredUser | null>(null);
@@ -55,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(loggedInUser);
         setIsAuthenticated(true);
         setIsAdmin(loggedInUser.role === 'admin');
-      } catch (e) {
+      } catch (_e) {
         localStorage.removeItem(LOGGED_IN_USER_KEY);
       }
     }
@@ -100,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (loggedInUserFromApi) {
         const frontEndUser: StoredUser = {
           id: String(loggedInUserFromApi.userId || loggedInUserFromApi.id),
-          name: loggedInUserFromApi.name || loggedInUserFromApi.nomeCompleto, // Backend pode retornar 'nomeCompleto' ou 'name'
+          name: loggedInUserFromApi.name || loggedInUserFromApi.nomeCompleto,
           email: loggedInUserFromApi.email,
           role: loggedInUserFromApi.role || 'user',
           locationPreference: loggedInUserFromApi.locationPreference,
@@ -132,14 +129,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userData: Omit<StoredUser, 'id' | 'role'> & { password: string }
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      const apiKey = '1234'; //API Key
+      const apiKey = '1234';
 
       const payload = {
-        nomeCompleto: userData.name, // Mapeia 'name' do frontend para 'nomeCompleto' do DTO
+        nomeCompleto: userData.name,
         email: userData.email,
         password: userData.password,
-        locationPreference: userData.locationPreference || "", // Garante que não é undefined
-        subscribedAlerts: userData.subscribedAlerts || [],   // Garante que não é undefined
+        locationPreference: userData.locationPreference || "",
+        subscribedAlerts: userData.subscribedAlerts || [],
       };
 
       const response = await fetch('http://localhost:8080/usuarios/registrar', {
@@ -154,29 +151,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!response.ok) {
         let errorMessage = `Erro HTTP: ${response.status}`;
         try {
-          const errorData = await response.text(); // Backend retorna mensagem de erro como texto simples
+          const errorData = await response.text();
           errorMessage = errorData || errorMessage;
-        } catch (e) {
+        } catch (_e) {
+          // Falha ao ler o corpo do erro, mantém a mensagem HTTP original
         }
         return { success: false, message: errorMessage };
       }
-
-      // A API retorna o usuário registrado no sucesso (201 CREATED)
-      // Não precisamos fazer nada com o corpo da resposta aqui,
-      // pois a página de registro já lida com o login.
-      // const registeredUser = await response.json(); 
       return { success: true };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Falha ao registrar usuário via API:', error);
-      return { success: false, message: error.message || 'Falha ao conectar com o servidor para registro.' };
+      let message = 'Falha ao conectar com o servidor para registro.';
+      if (error instanceof Error) {
+        message = error.message;
+      } else if (typeof error === 'string') {
+        message = error;
+      }
+      return { success: false, message };
     }
   };
   
-  // A função updateUserPreferences também precisará chamar a API
   const updateUserPreferences = async (userId: string, preferences: { locationPreference?: string; subscribedAlerts?: AlertType[] }): Promise<boolean> => {
-    console.warn("A função updateUserPreferences ainda usa localStorage. Precisa ser integrada com a API.");
-    // Lógica de localStorage mantida por enquanto
     if (user && user.id === userId) {
       const updatedUser = { ...user, ...preferences };
       setUser(updatedUser);
@@ -185,7 +181,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     return false;
   };
-
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, isAdmin, login, logout, register, updateUserPreferences }}>

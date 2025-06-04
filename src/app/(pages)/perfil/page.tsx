@@ -1,17 +1,14 @@
-// src/app/(auth)/perfil/page.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, availableAlertTypes, AlertType } from '../../contexts/AuthContext';
-import AnimatedSection from './../../components/AnimatedSection'; // Verifique este caminho
+import AnimatedSection from './../../components/AnimatedSection';
 
 export default function PerfilPage() {
   const { user, isAuthenticated, logout, updateUserPreferences } = useAuth();
   const router = useRouter();
 
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
   const [locationPreference, setLocationPreference] = useState(user?.locationPreference || '');
   const [subscribedAlerts, setSubscribedAlerts] = useState<AlertType[]>(user?.subscribedAlerts || []);
   
@@ -23,8 +20,6 @@ export default function PerfilPage() {
     if (!isAuthenticated && !user) {
       router.push('/login');
     } else if (user) {
-        setName(user.name);
-        setEmail(user.email);
         setLocationPreference(user.locationPreference || '');
         setSubscribedAlerts(user.subscribedAlerts || []);
     }
@@ -175,9 +170,9 @@ export default function PerfilPage() {
                 onClick={logout}
                 type="button" 
                 className="w-full bg-[var(--alert-red)] text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-opacity-80 transition-colors"
-              >
+            >
                 Sair (Logout)
-              </button>
+            </button>
         </div>
       </AnimatedSection>
     </div>

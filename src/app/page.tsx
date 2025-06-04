@@ -1,7 +1,6 @@
-// src/app/page.tsx
 "use client";
 
-import React, { ReactNode, JSXElementConstructor } from 'react';
+import React, { ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useInView } from 'react-intersection-observer';
@@ -19,7 +18,7 @@ import {
   CheckCircleIcon,
   NewspaperIcon,
   ChevronRightIcon,
-  TagIcon, // Adicionado
+  TagIcon,
 } from '@heroicons/react/24/outline';
 
 interface AnimatedSectionProps {
@@ -35,7 +34,8 @@ interface AnimatedSectionProps {
 interface ChildProps {
   className?: string;
   style?: React.CSSProperties;
-  [key: string]: any;
+  children?: ReactNode;
+  [key: string]: unknown;
 }
 
 const AnimatedSection: React.FC<AnimatedSectionProps> = ({
@@ -335,7 +335,6 @@ export default function HomePage() {
         </section>
       </AnimatedSection>
 
-      {/* SEÇÃO BLOG/ARTIGOS EM DESTAQUE - MODIFICADA ABAIXO */}
       <section className="py-16 md:py-20 my-12 md:my-16">
         <div className="container mx-auto px-6">
           <AnimatedSection animationType="fadeInUp" threshold={0.1} className="text-center mb-12 md:mb-16">

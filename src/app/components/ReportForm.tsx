@@ -1,10 +1,10 @@
-// src/components/ReportForm.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from './../contexts/AuthContext'; // Ajuste se o caminho for diferente
+import Image from 'next/image';
+import { useAuth } from './../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import AnimatedSection from './AnimatedSection'; // Ajuste se o caminho for diferente
+import AnimatedSection from './AnimatedSection';
 
 const ReportForm: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -62,13 +62,12 @@ const ReportForm: React.FC = () => {
       formDataForSubmission.append('image', selectedFile, selectedFile.name);
     }
     if (isAuthenticated && user && user.id) {
-      // Removido: if (user.id !== 'admin_id_special') { ... } para sempre enviar userId se logado. Ajuste se necessário.
       formDataForSubmission.append('userId', String(user.id));
     }
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234'; // Usar env var
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'; // Usar env var
+      const apiKey = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
       const response = await fetch(`${apiBaseUrl}/reportes`, {
         method: 'POST',
@@ -84,24 +83,31 @@ const ReportForm: React.FC = () => {
                 const errorData = await response.json();
                 if (errorData) {
                     backendErrorMessage = errorData.message || errorData.title || errorData.detail || 
-                                        (errorData.violations && errorData.violations[0]?.message) || 
-                                        (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
+                                           (errorData.violations && errorData.violations[0]?.message) || 
+                                           (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
                 }
             } else {
                 const errorText = await response.text();
                 if (errorText) { backendErrorMessage = errorText; }
             }
-        } catch (e) { /* não conseguiu ler o corpo do erro */ }
+        } catch (_e) { 
+            // não conseguiu ler o corpo do erro
+        }
         throw new Error(backendErrorMessage);
       }
 
-      // const result = await response.json(); // Descomente se precisar do resultado
       alert(`Reporte enviado com sucesso! Você será redirecionado para a página inicial.`);
       router.push('/');
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Falha ao enviar reporte:', error);
-      setSubmitStatus({ type: 'error', message: error.message || 'Falha ao conectar com o servidor.' });
+      let message = 'Falha ao conectar com o servidor.';
+      if (error instanceof Error) {
+        message = error.message;
+      } else if (typeof error === 'string') {
+        message = error;
+      }
+      setSubmitStatus({ type: 'error', message });
     } finally {
       setIsSubmitting(false);
     }
@@ -110,7 +116,6 @@ const ReportForm: React.FC = () => {
   const inputBaseClasses = "mt-1 block w-full p-3 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-header-bg)] dark:focus:ring-blue-500 focus:border-[var(--brand-header-bg)] dark:focus:border-blue-500 sm:text-sm transition-colors";
   const inputBgTextClasses = "bg-[var(--brand-input-background)] text-[var(--brand-text-primary)] placeholder:text-slate-400 dark:placeholder:text-slate-500";
   const disabledClasses = "disabled:bg-slate-100 dark:disabled:bg-slate-700/50 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed";
-
 
   return (
     <form
@@ -162,9 +167,8 @@ const ReportForm: React.FC = () => {
             name="eventType"
             value={eventType}
             onChange={(e) => setEventType(e.target.value)}
-            className={`${inputBaseClasses} ${inputBgTextClasses} appearance-none`} // appearance-none para melhor controle de estilo se necessário
+            className={`${inputBaseClasses} ${inputBgTextClasses} appearance-none`}
           >
-            {/* Adicionando classes para options para tentar controlar cor do texto no dark mode */}
             <option value="Alagamento" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Alagamento</option>
             <option value="QuedaDeArvore" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Queda de Árvore</option>
             <option value="FaltaDeEnergia" className="text-black dark:text-gray-200 bg-[var(--brand-input-background)]">Falta de Energia</option>
@@ -227,7 +231,16 @@ const ReportForm: React.FC = () => {
           {previewUrl && selectedFile && (
             <div className="mt-4">
               <p className="text-sm text-[var(--brand-text-secondary)]">Preview:</p>
-              <img src={previewUrl} alt={selectedFile.name} className="mt-2 rounded-md max-h-48 border border-gray-300 dark:border-slate-600" />
+              <div className="relative w-full max-w-xs h-48 mt-2 mx-auto">
+                <Image
+                  src={previewUrl}
+                  alt={selectedFile.name}
+                  layout="fill"
+                  objectFit="contain"
+                  className="rounded-md border border-gray-300 dark:border-slate-600"
+                  unoptimized={true}
+                />
+              </div>
             </div>
           )}
         </div>

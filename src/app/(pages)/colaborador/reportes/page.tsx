@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, FormEvent } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { EyeIcon, CheckCircleIcon, XCircleIcon, ShieldExclamationIcon, TrashIcon, ArrowPathIcon, XMarkIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '../../../contexts/AuthContext'; // Ajuste o caminho se necessário
+import { useAuth } from '../../../contexts/AuthContext';
 
 type ReportStatus = 'novo' | 'verificado' | 'em_atendimento' | 'resolvido' | 'falso_positivo';
 type ReportSeverity = 'baixa' | 'media' | 'alta' | 'nao_definida';
@@ -80,8 +81,11 @@ export default function GerenciarReportesPage() {
       const apiReports: ApiReport[] = await response.json();
       const mappedReports = apiReports.map(mapApiReportToReportData).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setReports(mappedReports);
-    } catch (error: any) {
-      setNotification({ type: 'error', message: error.message || 'Falha ao carregar reportes.' });
+    } catch (error: unknown) {
+      let message = 'Falha ao carregar reportes.';
+      if (error instanceof Error) { message = error.message; }
+      else if (typeof error === 'string') { message = error; }
+      setNotification({ type: 'error', message });
       setReports([]);
     } finally { setIsLoading(false); }
   }, [isAdmin, mapApiReportToReportData]);
@@ -125,8 +129,11 @@ export default function GerenciarReportesPage() {
         }
         const report: ApiReport = await response.json();
         return report;
-    } catch (error: any) {
-        setNotification({ type: 'error', message: `Falha ao carregar detalhes do reporte ${id}: ${error.message}` });
+    } catch (error: unknown) {
+        let message = `Falha ao carregar detalhes do reporte ${id}`;
+        if (error instanceof Error) { message = `${message}: ${error.message}`; }
+        else if (typeof error === 'string') { message = `${message}: ${error}`; }
+        setNotification({ type: 'error', message });
         return null;
     } finally {
         setIsLoading(false);
@@ -177,8 +184,6 @@ export default function GerenciarReportesPage() {
     setModalMode(null);
     setCurrentFormData(null);
     setEditingReportOriginal(null);
-    // Se você tiver uma ref para o input de arquivo, pode resetá-lo aqui também:
-    // ex: if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleModalFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -191,11 +196,6 @@ export default function GerenciarReportesPage() {
     if (!currentFormData) return;
     const file = event.target.files ? event.target.files[0] : null;
     setCurrentFormData(prev => prev ? { ...prev, imageFile: file } : null);
-    if (file) {
-        // Opcional: Preview da imagem ou mostrar nome do arquivo
-        // Se precisar limpar o URL da imagem se um arquivo for selecionado:
-        // setCurrentFormData(prev => prev ? { ...prev, imageUrl: '' } : null);
-    }
   };
 
   const handleModalFormSubmit = async () => {
@@ -207,7 +207,6 @@ export default function GerenciarReportesPage() {
     let endpoint = `${API_BASE_URL}/reportes`;
     let method = 'POST';
 
-    // Adiciona campos comuns ao FormData
     formDataToSubmit.append('eventType', currentFormData.eventType);
     formDataToSubmit.append('location', currentFormData.location);
     formDataToSubmit.append('description', currentFormData.description);
@@ -215,43 +214,29 @@ export default function GerenciarReportesPage() {
     formDataToSubmit.append('severity', currentFormData.severity);
     if (currentFormData.adminNotes) formDataToSubmit.append('adminNotes', currentFormData.adminNotes);
 
-
     if (modalMode === 'addAdminReport') {
-        // Para adicionar, o reporterName é o do admin logado ou o inserido
         formDataToSubmit.append('reporterName', currentFormData.reporterName || (user?.name || "Admin"));
-        // Para adicionar, o userId pode ser o do admin logado
         if (user?.id) formDataToSubmit.append('userId', String(user.id));
         if (currentFormData.imageFile) {
             formDataToSubmit.append('imageFile', currentFormData.imageFile);
         } else if (currentFormData.imageUrl) {
-            // Se a API suportar envio de URL de imagem na criação
             formDataToSubmit.append('imageUrl', currentFormData.imageUrl);
         }
     } else if (modalMode === 'viewEdit' && currentFormData.id) {
         endpoint = `${API_BASE_URL}/reportes/${currentFormData.id}`;
-        method = 'PUT'; // ou PATCH, dependendo da sua API
-        // Para editar, não alteramos o reporterName ou userId originais via este formulário,
-        // a menos que seja uma funcionalidade específica.
-        // A API deve decidir como lidar com reporterName/userId na atualização.
-        // Se o nome do reportador original for anônimo e foi editado, podemos enviar.
+        method = 'PUT';
         if (editingReportOriginal?.reporterName === "Anônimo" && currentFormData.reporterName && currentFormData.reporterName !== "Anônimo") {
             formDataToSubmit.append('reporterName', currentFormData.reporterName);
         }
-        // Se a API permitir atualizar a imagem via URL no PUT/PATCH
         if (currentFormData.imageUrl !== editingReportOriginal?.imageUrl) {
-             formDataToSubmit.append('imageUrl', currentFormData.imageUrl || '');
+            formDataToSubmit.append('imageUrl', currentFormData.imageUrl || '');
         }
-        // Importante: A API precisa ser capaz de lidar com FormData para PUT/PATCH
-        // ou você precisará enviar JSON e tratar o upload de imagem separadamente se houver nova imagem.
-        // Se for enviar JSON e tiver uma imagem nova, precisaria de um endpoint específico para upload
-        // ou uma lógica mais complexa aqui. Para simplicidade, este exemplo assume que PUT aceita FormData
-        // ou que não há upload de nova imagem na edição (apenas mudança de URL).
     }
 
     try {
         const response = await fetch(endpoint, {
             method: method,
-            headers: { 'X-API-Key': STATIC_API_KEY }, // Content-Type é definido automaticamente pelo FormData
+            headers: { 'X-API-Key': STATIC_API_KEY },
             body: formDataToSubmit,
         });
 
@@ -262,20 +247,23 @@ export default function GerenciarReportesPage() {
 
         setNotification({ type: 'success', message: `Reporte ${modalMode === 'addAdminReport' ? 'adicionado' : 'atualizado'} com sucesso!` });
         closeModal();
-        fetchReports(); // Re-busca os reportes para atualizar a lista
-    } catch (error: any) {
-        setNotification({ type: 'error', message: error.message });
+        fetchReports();
+    } catch (error: unknown) {
+        let message = 'Ocorreu um erro desconhecido.';
+        if (error instanceof Error) { message = error.message; }
+        else if (typeof error === 'string') { message = error; }
+        setNotification({ type: 'error', message });
     } finally {
         setIsSubmittingModal(false);
     }
   };
 
   const handleMudarStatusRapido = async (reportId: string, newStatus: ReportStatus) => {
-    setIsLoading(true); // Pode usar um loading específico para a linha/botão
+    setIsLoading(true);
     setNotification(null);
     try {
         const response = await fetch(`${API_BASE_URL}/reportes/${reportId}/status`, {
-            method: 'PATCH', // Ou PUT, dependendo da sua API
+            method: 'PATCH',
             headers: {
                 'X-API-Key': STATIC_API_KEY,
                 'Content-Type': 'application/json',
@@ -288,9 +276,12 @@ export default function GerenciarReportesPage() {
             throw new Error(errorData.message || 'Falha ao atualizar status do reporte.');
         }
         setNotification({ type: 'success', message: `Status do reporte ${reportId} atualizado para ${newStatus.replace('_', ' ')}.` });
-        fetchReports(); // Re-busca para refletir a mudança
-    } catch (error: any) {
-        setNotification({ type: 'error', message: error.message });
+        fetchReports();
+    } catch (error: unknown) {
+        let message = 'Falha ao atualizar status do reporte.';
+        if (error instanceof Error) { message = error.message; }
+        else if (typeof error === 'string') { message = error; }
+        setNotification({ type: 'error', message });
     } finally {
         setIsLoading(false);
     }
@@ -300,7 +291,7 @@ export default function GerenciarReportesPage() {
     if (!window.confirm(`Tem certeza que deseja remover o reporte ID ${reportId}? Esta ação não pode ser desfeita.`)) {
         return;
     }
-    setIsLoading(true); // Pode usar um loading específico
+    setIsLoading(true);
     setNotification(null);
     try {
         const response = await fetch(`${API_BASE_URL}/reportes/${reportId}`, {
@@ -309,18 +300,20 @@ export default function GerenciarReportesPage() {
         });
 
         if (!response.ok) {
-            // Se o backend não retorna JSON no DELETE, mas um texto de erro.
             if (response.status === 204 || response.headers.get("content-length") === "0") {
-                 // Sucesso, mas sem conteúdo. Algumas APIs retornam 204 para DELETE.
+                // Success
             } else {
                 const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
                 throw new Error(errorData.message || 'Falha ao remover o reporte.');
             }
         }
         setNotification({ type: 'success', message: `Reporte ID ${reportId} removido com sucesso.` });
-        fetchReports(); // Re-busca os reportes
-    } catch (error: any) {
-        setNotification({ type: 'error', message: error.message });
+        fetchReports();
+    } catch (error: unknown) {
+        let message = 'Falha ao remover o reporte.';
+        if (error instanceof Error) { message = error.message; }
+        else if (typeof error === 'string') { message = error; }
+        setNotification({ type: 'error', message });
     } finally {
         setIsLoading(false);
     }
@@ -335,14 +328,13 @@ export default function GerenciarReportesPage() {
   const modalTextareaStyles = `${modalInputStyles} min-h-[80px]`;
   const modalSelectStyles = `${modalInputStyles} appearance-none`;
 
-
   if (!isAuthenticated || !isAdmin && typeof window !== 'undefined') {
     return <div className="p-6 text-center text-[var(--brand-text-secondary)]">Verificando permissões...</div>;
   }
   if (!isAdmin && !isLoading && typeof window !== 'undefined') {
     router.push('/'); return null;
   }
-   
+    
   const getStatusBadgeClass = (status: ReportStatus) => {
     switch (status) {
         case 'novo': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300';
@@ -396,8 +388,16 @@ export default function GerenciarReportesPage() {
         {modalMode === 'viewEdit' && originalDataForDisplay?.imageUrl && (
           <div className="my-2">
             <p className="text-xs font-medium text-[var(--brand-text-secondary)]">Imagem Anexada:</p>
-            <img src={originalDataForDisplay.imageUrl.startsWith('http') ? originalDataForDisplay.imageUrl : `${API_BASE_URL}${originalDataForDisplay.imageUrl}`}
-              alt="Imagem do Reporte" className="mt-1 rounded-md max-w-full h-auto max-h-48 border dark:border-slate-700 object-contain" />
+            <div className="relative w-full max-w-sm h-48 mt-1 mx-auto">
+              <Image 
+                src={originalDataForDisplay.imageUrl.startsWith('http') ? originalDataForDisplay.imageUrl : `${API_BASE_URL}${originalDataForDisplay.imageUrl}`}
+                alt="Imagem do Reporte" 
+                layout="fill"
+                objectFit="contain"
+                className="rounded-md border dark:border-slate-700"
+                unoptimized={true} 
+              />
+            </div>
           </div>
         )}
         {(modalMode === 'addAdminReport') && (
@@ -505,7 +505,7 @@ export default function GerenciarReportesPage() {
       </section>
 
       <section className="bg-[var(--brand-card-background)] rounded-lg shadow-[var(--shadow-subtle)] overflow-x-auto">
-        {isLoading && !isModalOpen ? ( // Ajustado para não mostrar carregando geral se o modal estiver aberto e carregando dados do modal
+        {isLoading && !isModalOpen ? (
           <p className="text-center text-[var(--brand-text-secondary)] py-8">Carregando reportes...</p>
         ) : reports.length === 0 && !isLoading ? (
           <p className="text-center text-[var(--brand-text-secondary)] py-8">Nenhum reporte cadastrado no sistema.</p>

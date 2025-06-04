@@ -1,10 +1,9 @@
-// src/app/abrigos/page.tsx
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import ShelterCard from '../../components/ShelterCard';
-import AnimatedSection from '../../components/AnimatedSection';
-import { InformationCircleIcon } from '@heroicons/react/24/outline'; // Ícone para o aviso
+import ShelterCard from '../../components/ShelterCard'; // Verifique se o caminho está correto, o log inicial não indicava erro aqui
+import AnimatedSection from '../../components/AnimatedSection'; // Verifique se o caminho está correto
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
 interface ShelterInfo {
   id: number;
@@ -25,8 +24,8 @@ interface ShelterInfo {
 }
 
 type NoticeStateType = 'hidden' | 'entering' | 'visible' | 'leaving';
-const NOTICE_VISIBLE_DURATION = 8000; // Aviso visível por 8 segundos
-const NOTICE_FADE_DURATION = 500;     // Duração da animação de fade (ms) para corresponder a duration-500
+const NOTICE_VISIBLE_DURATION = 8000;
+const NOTICE_FADE_DURATION = 500;
 
 export default function AbrigosPage() {
   const [sheltersToDisplay, setSheltersToDisplay] = useState<ShelterInfo[]>([]);
@@ -56,21 +55,27 @@ export default function AbrigosPage() {
             } else if (typeof errorData === 'string' && errorData.length > 0) {
               errorMessage += ` - ${errorData}`;
             } else if (response.statusText) {
-               errorMessage = `HTTP error! status: ${response.status} - ${response.statusText}`;
+                errorMessage = `HTTP error! status: ${response.status} - ${response.statusText}`;
             } else {
-               errorMessage = `HTTP error! status: ${response.status}`;
+                errorMessage = `HTTP error! status: ${response.status}`;
             }
-          } catch (e) {
-            // Falha ao parsear
+          } catch (_e) { // Erro 1 corrigido: _e para indicar não uso intencional
+            // Falha ao parsear o corpo do erro, mas o errorMessage principal já está definido
+            console.warn("Não foi possível parsear o corpo da resposta de erro, usando statusText.");
           }
           throw new Error(errorMessage);
         }
         const data: ShelterInfo[] = await response.json();
-        // Ordenar abrigos por nome, por exemplo, ou deixar como a API retorna
         setSheltersToDisplay(data.sort((a,b) => a.name.localeCompare(b.name)));
-      } catch (e: any) {
+      } catch (e: unknown) { // Erro 2 corrigido: e: unknown
         console.error("Falha ao buscar abrigos:", e);
-        setError(e.message || "Ocorreu um erro ao buscar os abrigos.");
+        let message = "Ocorreu um erro ao buscar os abrigos.";
+        if (e instanceof Error) {
+          message = e.message;
+        } else if (typeof e === 'string') {
+          message = e;
+        }
+        setError(message);
       } finally {
         setIsLoading(false);
       }
@@ -95,7 +100,7 @@ export default function AbrigosPage() {
   useEffect(() => {
     let transitionEndTimerId: NodeJS.Timeout;
     if (noticeState === 'entering') {
-      const rafId = requestAnimationFrame(() => {
+      const rafId = requestAnimationFrame(() => { // requestAnimationFrame retorna um number
         setNoticeState('visible');
       });
       return () => cancelAnimationFrame(rafId);
@@ -110,7 +115,7 @@ export default function AbrigosPage() {
   return (
     <div className="container mx-auto px-4 sm:px-6 py-10 md:py-12">
       <AnimatedSection animationType="fadeInUp" delay="duration-500">
-        <section className="text-center mb-8 md:mb-10"> {/* Reduzido mb */}
+        <section className="text-center mb-8 md:mb-10">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--brand-header-bg)]">
             Abrigos e Pontos de Apoio
           </h1>

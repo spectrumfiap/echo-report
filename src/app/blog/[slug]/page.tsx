@@ -3,7 +3,20 @@ import AnimatedSection from '../../components/AnimatedSection';
 import { notFound } from 'next/navigation';
 import React from 'react';
 
-const allArticlesData: { [key: string]: any } = {
+interface Article {
+  slug: string;
+  title: string;
+  category: string;
+  publicationDate: string;
+  authorName: string;
+  authorImageUrl: string;
+  heroImageUrl: string;
+  heroImageAlt: string;
+  summary: string;
+  htmlContent: string;
+}
+
+const allArticlesData: { [key: string]: Article } = {
   'guia-preparacao-enchentes': {
     slug: 'guia-preparacao-enchentes',
     title: 'Guia Completo: Como se Preparar para Enchentes',
@@ -155,7 +168,7 @@ const allArticlesData: { [key: string]: any } = {
   },
 };
 
-async function getArticleData(slug: string) {
+async function getArticleData(slug: string): Promise<Article | null> {
   return allArticlesData[slug] || null;
 }
 
@@ -235,7 +248,7 @@ export default async function ArticlePage({ params: rawParams }: { params: { slu
         authorImageUrl={article.authorImageUrl}
         heroImageUrl={article.heroImageUrl}
         heroImageAlt={article.heroImageAlt}
-        slug={params.slug} // Passando o slug para ArticleLayout
+        slug={params.slug}
       >
         {articleBody}
       </ArticleLayout>

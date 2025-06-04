@@ -1,4 +1,3 @@
-// src/app/(admin)/colaborador/gerenciar-alertas/page.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
@@ -20,6 +19,17 @@ interface AlertData {
 interface AlertFormData {
   id?: string; title: string; description: string; severity: AlertSeverity;
   source: string; publishedAt?: string; targetArea?: string; status: AlertStatus;
+}
+
+interface AlertPayload {
+  id?: number;
+  title: string;
+  description: string;
+  severity: AlertSeverity;
+  source: string;
+  targetArea?: string;
+  status: AlertStatus;
+  publishedAt?: string;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
@@ -65,8 +75,11 @@ export default function GerenciarAlertasPage() {
       }
       const apiAlerts: ApiAlert[] = await response.json();
       setAlerts(apiAlerts.map(mapApiAlertToAlertData).sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
-    } catch (error: any) {
-      setNotification({ type: 'error', message: error.message || 'Falha ao carregar alertas.' });
+    } catch (error: unknown) {
+      let message = 'Falha ao carregar alertas.';
+      if (error instanceof Error) { message = error.message; }
+      else if (typeof error === 'string') { message = error; }
+      setNotification({ type: 'error', message });
       setAlerts([]);
     } finally { setIsLoading(false); }
   }, [isAdmin, mapApiAlertToAlertData]);
@@ -80,7 +93,7 @@ export default function GerenciarAlertasPage() {
   const formatDateTimeForInput = (isoString?: string) => {
     if (!isoString) return '';
     try { const date = new Date(isoString); return date.toISOString().slice(0, 16); }
-    catch (e) { return ''; }
+    catch (_e) { return ''; }
   };
   
   const openModal = (action: 'add' | 'edit' | 'view', alert?: AlertData) => {
@@ -116,27 +129,43 @@ export default function GerenciarAlertasPage() {
   const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); if (!alertFormData) return;
     setIsSubmittingModal(true); setNotification(null);
-    const payload = {
-      title: alertFormData.title, description: alertFormData.description, severity: alertFormData.severity,
-      source: alertFormData.source, targetArea: alertFormData.targetArea, status: alertFormData.status,
-      publishedAt: (alertFormData.status === 'agendado' || modalAction === 'edit') && alertFormData.publishedAt
-                    ? new Date(alertFormData.publishedAt).toISOString()
-                    : (modalAction === 'add' && alertFormData.status === 'ativo' ? new Date().toISOString() : undefined),
+
+    const publishedAtValue = (alertFormData.status === 'agendado' || modalAction === 'edit') && alertFormData.publishedAt
+                            ? new Date(alertFormData.publishedAt).toISOString()
+                            : (modalAction === 'add' && alertFormData.status === 'ativo' ? new Date().toISOString() : undefined);
+
+    const basePayload: Omit<AlertPayload, 'id'> = {
+      title: alertFormData.title,
+      description: alertFormData.description,
+      severity: alertFormData.severity,
+      source: alertFormData.source,
+      targetArea: alertFormData.targetArea || undefined,
+      status: alertFormData.status,
     };
-    if (payload.publishedAt === undefined) { delete (payload as any).publishedAt; }
+
+    if (publishedAtValue) {
+      (basePayload as AlertPayload).publishedAt = publishedAtValue;
+    }
+    
+    const finalPayload: AlertPayload = { ...basePayload };
+    if (modalAction === 'edit' && alertFormData.id) {
+      finalPayload.id = parseInt(alertFormData.id);
+    }
+    
     let response: Response;
     try {
       if (modalAction === 'add') {
         response = await fetch(`${API_BASE_URL}/alertas`, {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(finalPayload),
         });
       } else if (modalAction === 'edit' && alertFormData.id) {
         response = await fetch(`${API_BASE_URL}/alertas/${alertFormData.id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
-          body: JSON.stringify({ id: parseInt(alertFormData.id), ...payload }),
+          body: JSON.stringify(finalPayload),
         });
       } else { throw new Error("Ação de formulário inválida."); }
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
         throw new Error(errorData.message || errorData.entity || `Erro ${response.status}`);
@@ -144,8 +173,11 @@ export default function GerenciarAlertasPage() {
       const actionText = modalAction === 'add' ? 'criado' : 'atualizado';
       setNotification({ type: 'success', message: `Alerta ${actionText} com sucesso!` });
       fetchAlerts(); closeModal();
-    } catch (error: any) {
-      setNotification({ type: 'error', message: error.message || `Falha ao ${modalAction === 'add' ? 'criar' : 'atualizar'} alerta.` });
+    } catch (error: unknown) {
+      let message = `Falha ao ${modalAction === 'add' ? 'criar' : 'atualizar'} alerta.`;
+      if (error instanceof Error) { message = error.message; }
+      else if (typeof error === 'string') { message = error; }
+      setNotification({ type: 'error', message });
     } finally { setIsSubmittingModal(false); }
   };
   
@@ -158,13 +190,16 @@ export default function GerenciarAlertasPage() {
         });
         if (!response.ok) {
           let errorMsg = `Erro ${response.status}`;
-          try { const data = await response.json(); errorMsg = data.message || data.entity || errorMsg; } catch(e){}
+          try { const data = await response.json(); errorMsg = data.message || data.entity || errorMsg; } catch(_e){}
           throw new Error(errorMsg);
         }
         setNotification({ type: 'success', message: `Alerta "${alertTitle}" removido.` });
         fetchAlerts();
-      } catch (error: any) {
-        setNotification({ type: 'error', message: error.message || 'Falha ao remover alerta.' });
+      } catch (error: unknown) {
+        let message = 'Falha ao remover alerta.';
+        if (error instanceof Error) { message = error.message; }
+        else if (typeof error === 'string') { message = error; }
+        setNotification({ type: 'error', message });
       }
     }
   };
@@ -175,10 +210,19 @@ export default function GerenciarAlertasPage() {
     if (window.confirm(`Tem certeza que deseja enviar o alerta "${alertToUpdate.title}" agora?`)) {
         setIsSubmittingModal(true); setNotification(null);
         try {
-            const payload = { ...alertToUpdate, id: parseInt(alertToUpdate.id), status: 'ativo' as AlertStatus, publishedAt: new Date().toISOString() };
+            const payloadToSend: AlertPayload = {
+                id: parseInt(alertToUpdate.id),
+                title: alertToUpdate.title,
+                description: alertToUpdate.description,
+                severity: alertToUpdate.severity,
+                source: alertToUpdate.source,
+                targetArea: alertToUpdate.targetArea || undefined,
+                status: 'ativo',
+                publishedAt: new Date().toISOString(),
+            };
             const response = await fetch(`${API_BASE_URL}/alertas/${alertId}`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
-                body: JSON.stringify(payload),
+                body: JSON.stringify(payloadToSend),
             });
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ message: `Erro ${response.status}` }));
@@ -186,8 +230,11 @@ export default function GerenciarAlertasPage() {
             }
             setNotification({ type: 'success', message: `Alerta "${alertToUpdate.title}" enviado com sucesso.` });
             fetchAlerts();
-        } catch (error: any) {
-            setNotification({ type: 'error', message: error.message || 'Falha ao enviar alerta.' });
+        } catch (error: unknown) {
+            let message = 'Falha ao enviar alerta.';
+            if (error instanceof Error) { message = error.message; }
+            else if (typeof error === 'string') { message = error; }
+            setNotification({ type: 'error', message });
         } finally { setIsSubmittingModal(false); }
     }
   };
@@ -206,13 +253,12 @@ export default function GerenciarAlertasPage() {
   const modalTextareaStyles = `${modalInputStyles} min-h-[80px]`;
   const modalSelectStyles = `${modalInputStyles} appearance-none`;
 
-
   if (!isAuthenticated || !isAdmin && typeof window !== 'undefined') {
     return <div className="container mx-auto p-6 text-center text-[var(--brand-text-secondary)]">Verificando permissões...</div>;
   }
   if (!isAdmin && !isLoading) {
-     router.push('/');
-     return <div className="container mx-auto p-6 text-center text-[var(--brand-text-secondary)]">Acesso negado. Redirecionando...</div>;
+      router.push('/');
+      return <div className="container mx-auto p-6 text-center text-[var(--brand-text-secondary)]">Acesso negado. Redirecionando...</div>;
   }
 
   const renderModalContent = () => {
@@ -277,7 +323,7 @@ export default function GerenciarAlertasPage() {
               {dataForForm.status === 'agendado' ? 'Agendar Para:' : (modalAction === 'edit' ? 'Data de Publicação/Agendamento:' : 'Data de Publicação (auto se "ativo"):')}
             </label>
             <input type="datetime-local" name="publishedAt" id="publishedAtModal" value={dataForForm.publishedAt || ''} onChange={handleFormInputChange} className={`${modalInputStyles} dark:[color-scheme:dark]`} />
-            {modalAction === 'add' && dataForForm.status !== 'agendado' && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Para status 'ativo', será definido como agora se deixado em branco.</p>}
+            {modalAction === 'add' && dataForForm.status !== 'agendado' && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Para status &apos;ativo&apos;, será definido como agora se deixado em branco.</p>}
           </div>
           <div className="flex justify-end space-x-3 pt-4">
             <button type="button" onClick={closeModal} className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-500 focus:ring-slate-400 dark:focus:ring-slate-500 dark:focus:ring-offset-[var(--brand-card-background)]`}>

@@ -1,4 +1,3 @@
-// src/app/alertas/page.tsx
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -35,40 +34,51 @@ const formatTimeAgo = (isoDateTimeString?: string): string => {
     if (days < 30) return `Há ${days}d`;
     if (months < 12) return `Há ${months} meses`;
     return `Há ${years} anos`;
-  } catch (error) {
+  } catch (_error) {
     return 'Data inválida';
   }
 };
 
 const AlertCard = ({ alert }: { alert: AlertInfo }) => {
   const { title, severity, source, publishedAt, description } = alert;
-  let bgColor = 'bg-gray-100 dark:bg-slate-800';
-  let textColor = 'text-gray-800 dark:text-gray-300';
-  let borderColor = 'border-gray-300 dark:border-slate-600';
+  const bgColorDefault = 'bg-gray-100 dark:bg-slate-800';
+  const textColorDefault = 'text-gray-800 dark:text-gray-300';
+  const borderColorDefault = 'border-gray-300 dark:border-slate-600';
 
-  if (severity === 'Alto') {
-    bgColor = 'bg-[var(--alert-red)]/10 dark:bg-[var(--alert-red)]/20';
-    textColor = 'text-[var(--alert-red)] dark:text-[var(--alert-red-light)]';
-    borderColor = 'border-[var(--alert-red)]/50 dark:border-[var(--alert-red)]';
-  } else if (severity === 'Medio') {
-    bgColor = 'bg-[var(--alert-orange)]/10 dark:bg-[var(--alert-orange)]/20';
-    textColor = 'text-[var(--alert-orange)] dark:text-[var(--alert-orange-light)]';
-    borderColor = 'border-[var(--alert-orange)]/50 dark:border-[var(--alert-orange)]';
-  } else if (severity === 'Baixo') {
-    bgColor = 'bg-[var(--alert-yellow)]/10 dark:bg-[var(--alert-yellow)]/20';
-    textColor = 'text-[var(--alert-yellow)] dark:text-[var(--alert-yellow-light)]';
-    borderColor = 'border-[var(--alert-yellow)]/50 dark:border-[var(--alert-yellow)]';
-  } else if (severity === 'Informativo') {
-    bgColor = 'bg-[var(--alert-blue)]/10 dark:bg-[var(--alert-blue)]/20';
-    textColor = 'text-[var(--alert-blue)] dark:text-[var(--alert-blue-light)]';
-    borderColor = 'border-[var(--alert-blue)]/50 dark:border-[var(--alert-blue)]';
-  }
+  const severityStyles: Record<string, {bgColor: string, textColor: string, borderColor: string}> = {
+    'Alto': {
+      bgColor: 'bg-[var(--alert-red)]/10 dark:bg-[var(--alert-red)]/20',
+      textColor: 'text-[var(--alert-red)] dark:text-[var(--alert-red-light)]',
+      borderColor: 'border-[var(--alert-red)]/50 dark:border-[var(--alert-red)]',
+    },
+    'Medio': {
+      bgColor: 'bg-[var(--alert-orange)]/10 dark:bg-[var(--alert-orange)]/20',
+      textColor: 'text-[var(--alert-orange)] dark:text-[var(--alert-orange-light)]',
+      borderColor: 'border-[var(--alert-orange)]/50 dark:border-[var(--alert-orange)]',
+    },
+    'Baixo': {
+      bgColor: 'bg-[var(--alert-yellow)]/10 dark:bg-[var(--alert-yellow)]/20',
+      textColor: 'text-[var(--alert-yellow)] dark:text-[var(--alert-yellow-light)]',
+      borderColor: 'border-[var(--alert-yellow)]/50 dark:border-[var(--alert-yellow)]',
+    },
+    'Informativo': {
+      bgColor: 'bg-[var(--alert-blue)]/10 dark:bg-[var(--alert-blue)]/20',
+      textColor: 'text-[var(--alert-blue)] dark:text-[var(--alert-blue-light)]',
+      borderColor: 'border-[var(--alert-blue)]/50 dark:border-[var(--alert-blue)]',
+    }
+  };
+
+  const styles = severityStyles[severity] || { 
+    bgColor: bgColorDefault, 
+    textColor: textColorDefault, 
+    borderColor: borderColorDefault 
+  };
 
   return (
-    <div className={`p-5 md:p-6 rounded-lg shadow-[var(--shadow-subtle)] border-l-4 ${borderColor} ${bgColor}`}>
+    <div className={`p-5 md:p-6 rounded-lg shadow-[var(--shadow-subtle)] border-l-4 ${styles.borderColor} ${styles.bgColor}`}>
       <div className="flex justify-between items-start mb-2">
-        <h3 className={`text-lg sm:text-xl font-semibold ${textColor}`}>{title}</h3>
-        <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${textColor} ${bgColor.replace('/10', '/20').replace('/20', '/30')}`}>{severity}</span>
+        <h3 className={`text-lg sm:text-xl font-semibold ${styles.textColor}`}>{title}</h3>
+        <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${styles.textColor} ${styles.bgColor.replace('/10', '/20').replace('/20', '/30')}`}>{severity}</span>
       </div>
       <p className="text-xs sm:text-sm text-[var(--brand-text-secondary)] mb-1"><strong>Fonte:</strong> {source}</p>
       <p className="text-xs sm:text-sm text-[var(--brand-text-secondary)] mb-3"><strong>Publicado:</strong> {formatTimeAgo(publishedAt)}</p>
@@ -107,14 +117,22 @@ export default function AlertasPage() {
             if (errorData && errorData.entity) { errorMessage = `${errorMessage} - ${errorData.entity}`; }
             else if (typeof errorData === 'string' && errorData.length > 0) { errorMessage = `${errorMessage} - ${errorData}`; }
             else if (response.statusText) { errorMessage = `${errorMessage} - ${response.statusText}`; }
-          } catch (e) { /* Falha ao parsear JSON do erro, usa mensagem padrão */ }
+          } catch (_e) { 
+            // Falha ao parsear JSON do erro, usa mensagem padrão
+          }
           throw new Error(errorMessage);
         }
         const data: AlertInfo[] = await response.json();
         setAlerts(data.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("Falha ao buscar alertas:", e);
-        setError(e.message || "Ocorreu um erro ao buscar os alertas.");
+        let message = "Ocorreu um erro ao buscar os alertas.";
+        if (e instanceof Error) {
+          message = e.message;
+        } else if (typeof e === 'string') {
+          message = e;
+        }
+        setError(message);
       } finally {
         setIsLoading(false);
       }
@@ -157,7 +175,7 @@ export default function AlertasPage() {
             border-l-4 border-blue-500 dark:border-sky-600 
             text-blue-700 dark:text-sky-200 
             rounded-md shadow-sm text-sm flex items-start
-            transition-opacity ease-in-out duration-${NOTICE_FADE_DURATION} 
+            transition-opacity ease-in-out duration-500
             ${noticeState === 'visible' ? 'opacity-100' : 'opacity-0'}
           `}
         >
