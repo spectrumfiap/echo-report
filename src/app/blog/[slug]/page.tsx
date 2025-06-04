@@ -2,8 +2,7 @@
 import React from 'react';
 // Use Next.js Image component for optimization
 import Image from 'next/image';
-// Import your article data and type
-import { allArticlesData, Article } from '.../../../lib/articles';
+import { allArticlesData, Article } from '@/lib/articles';
 
 // This function will generate the static paths for your dynamic routes.
 // It replaces getStaticPaths from the Pages Router.
