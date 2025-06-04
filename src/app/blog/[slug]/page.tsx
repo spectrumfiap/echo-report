@@ -3,6 +3,7 @@ import AnimatedSection from '../../components/AnimatedSection';
 import { notFound } from 'next/navigation';
 import React from 'react';
 
+// Define the type for the article data
 interface Article {
   slug: string;
   title: string;
@@ -14,6 +15,15 @@ interface Article {
   heroImageAlt: string;
   summary: string;
   htmlContent: string;
+}
+
+// Define the props for the page component and generateMetadata
+// This explicitly states that 'params' will be an object with a 'slug' string.
+interface ArticlePageProps {
+  params: {
+    slug: string;
+  };
+  // searchParams?: { [key: string]: string | string[] | undefined }; // Include if you use search params
 }
 
 const allArticlesData: { [key: string]: Article } = {
@@ -172,8 +182,8 @@ async function getArticleData(slug: string): Promise<Article | null> {
   return allArticlesData[slug] || null;
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  // Removed: const params = await Promise.resolve(rawParams);
+// *** IMPORTANT: Using the new explicit interface for props here ***
+export async function generateMetadata({ params }: ArticlePageProps) {
   const { slug } = params;
 
   if (!slug || typeof slug !== 'string') {
@@ -215,8 +225,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  // Removed: const params = await Promise.resolve(rawParams);
+// *** IMPORTANT: Using the new explicit interface for props here ***
+export default async function ArticlePage({ params }: ArticlePageProps) {
   const article = await getArticleData(params.slug);
 
   if (!article) {
