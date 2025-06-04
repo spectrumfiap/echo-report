@@ -32,19 +32,18 @@ const allArticlesData: { [key: string]: Article } = {
   },
 };
 
-async function getArticleData(slug: string): Promise<Article | null> {
-  return allArticlesData[slug] || null;
+function normalizeSlug(slug: string | string[]): string {
+  return Array.isArray(slug) ? slug.join('/') : slug;
 }
 
 type Props = {
   params: {
-    slug: string;
+    slug: string | string[];
   };
 };
 
-// ✅ Corrigido: generateMetadata com o tipo Props
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = params;
+  const slug = normalizeSlug(params.slug);
   const article = await getArticleData(slug);
 
   if (!article) {
@@ -55,9 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const imageUrl = article.heroImageUrl
-    ? new URL(article.heroImageUrl, baseUrl).toString()
-    : undefined;
+  const imageUrl = article.heroImageUrl ? new URL(article.heroImageUrl, baseUrl).toString() : undefined;
 
   const pageDescription =
     article.summary ||
@@ -86,9 +83,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// ✅ Corrigido: página do artigo
+async function getArticleData(slug: string): Promise<Article | null> {
+  return allArticlesData[slug] || null;
+}
+
 export default async function ArticlePage({ params }: Props) {
-  const article = await getArticleData(params.slug);
+  const slug = normalizeSlug(params.slug);
+  const article = await getArticleData(slug);
 
   if (!article) {
     notFound();
@@ -108,7 +109,7 @@ export default async function ArticlePage({ params }: Props) {
         authorImageUrl={article.authorImageUrl}
         heroImageUrl={article.heroImageUrl}
         heroImageAlt={article.heroImageAlt}
-        slug={params.slug}
+        slug={slug}
       >
         <div
           className="prose lg:prose-lg max-w-none
@@ -127,7 +128,6 @@ export default async function ArticlePage({ params }: Props) {
   );
 }
 
-// ✅ Corrigido: Retornar formato com "params" para bater com o tipo Props
 export async function generateStaticParams(): Promise<{ params: { slug: string } }[]> {
   const slugs = Object.keys(allArticlesData);
   return slugs.map((slug) => ({
