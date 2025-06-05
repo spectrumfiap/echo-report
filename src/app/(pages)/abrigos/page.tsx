@@ -128,7 +128,7 @@ export default function AbrigosPage() {
       {noticeState !== 'hidden' && (
               <div className={`mb-6 p-3 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-[var(--brand-header-bg)] dark:border-blue-500 text-blue-700 dark:text-blue-300 rounded-md shadow-sm text-sm flex items-start transition-opacity ease-in-out duration-${NOTICE_FADE_DURATION} ${noticeState === 'visible' ? 'opacity-100' : 'opacity-0'}`}>
                 <InformationCircleIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                <span>Estamos utilizando serviços de hospedagem gratuitos para nossa API. O carregamento inicial dos dados do mapa pode levar alguns segundos. Agradecemos a sua paciência!</span>
+                <span>Estamos utilizando serviços de hospedagem gratuitos para nossa API. O carregamento inicial dos dados dos abrigos pode levar alguns segundos. Agradecemos a sua paciência!</span>
               </div>
             )}
 
