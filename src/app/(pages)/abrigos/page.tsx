@@ -126,11 +126,23 @@ export default function AbrigosPage() {
       </AnimatedSection>
 
       {noticeState !== 'hidden' && (
-              <div className={`mb-6 p-3 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-[var(--brand-header-bg)] dark:border-blue-500 text-blue-700 dark:text-blue-300 rounded-md shadow-sm text-sm flex items-start transition-opacity ease-in-out duration-${NOTICE_FADE_DURATION} ${noticeState === 'visible' ? 'opacity-100' : 'opacity-0'}`}>
-                <InformationCircleIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                <span>Estamos utilizando serviços de hospedagem gratuitos para nossa API. O carregamento inicial dos dados dos abrigos pode levar alguns segundos. Agradecemos a sua paciência!</span>
-              </div>
-            )}
+        <div
+          className={`
+            mb-6 p-3 
+            bg-blue-100 dark:bg-sky-800 
+            border-l-4 border-blue-500 dark:border-sky-600 
+            text-blue-700 dark:text-sky-200 
+            rounded-md shadow-sm text-sm flex items-start
+            transition-opacity ease-in-out duration-500
+            ${noticeState === 'visible' ? 'opacity-100' : 'opacity-0'}
+          `}
+        >
+          <InformationCircleIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+          <span>
+            Estamos utilizando serviços de hospedagem gratuitos para nossa API. O carregamento inicial dos abrigos pode levar alguns segundos. Agradecemos a sua paciência!
+          </span>
+        </div>
+      )}
 
       {isLoading && (
         <AnimatedSection animationType="fadeIn" delay="duration-300">
