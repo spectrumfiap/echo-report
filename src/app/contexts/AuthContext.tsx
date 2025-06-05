@@ -15,7 +15,7 @@ export const availableAlertTypes = [
 export type AlertType = typeof availableAlertTypes[number];
 
 export interface StoredUser {
-  id: string;
+  id: string; // Mantém como string no frontend para consistência (ex: admin_id_special)
   name: string;
   email: string;
   locationPreference?: string;
@@ -30,7 +30,10 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: Omit<StoredUser, 'id' | 'role'> & {password: string}) => Promise<{ success: boolean, message?: string }>;
-  updateUserPreferences: (userId: string, preferences: { name?: string; locationPreference?: string; subscribedAlerts?: AlertType[] }) => Promise<boolean>;
+  updateUserPreferences: (
+    userId: string, 
+    preferences: { name?: string; locationPreference?: string; subscribedAlerts?: AlertType[] }
+  ) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,12 +69,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (lowerEmail === ADMIN_EMAIL && pass === 'admin') {
       const adminUser: StoredUser = {
-        id: 'admin_id_special',
-        name: 'Administrador',
-        email: ADMIN_EMAIL,
-        role: 'admin',
-        locationPreference: 'Todas as áreas',
-        subscribedAlerts: [...availableAlertTypes]
+        id: 'admin_id_special', name: 'Administrador', email: ADMIN_EMAIL, role: 'admin',
+        locationPreference: 'Todas as áreas', subscribedAlerts: [...availableAlertTypes]
       };
       localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(adminUser));
       setUser(adminUser);
@@ -81,12 +80,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios/login`, { // USA API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/usuarios/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': STATIC_API_KEY, // USA STATIC_API_KEY
-        },
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': STATIC_API_KEY },
         body: JSON.stringify({ email: lowerEmail, password: pass }),
       });
 
@@ -99,8 +95,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (loggedInUserFromApi) {
         const frontEndUser: StoredUser = {
-          id: String(loggedInUserFromApi.userId || loggedInUserFromApi.id),
-          name: loggedInUserFromApi.name || loggedInUserFromApi.nomeCompleto,
+          id: String(loggedInUserFromApi.userId || loggedInUserFromApi.id || loggedInUserFromApi.id_usuario),
+          name: loggedInUserFromApi.nomeCompleto || loggedInUserFromApi.name,
           email: loggedInUserFromApi.email,
           role: loggedInUserFromApi.role || 'user',
           locationPreference: loggedInUserFromApi.locationPreference,
@@ -140,11 +136,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         subscribedAlerts: userData.subscribedAlerts || [],
       };
 
-      const response = await fetch(`${API_BASE_URL}/usuarios/registrar`, { // USA API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/usuarios/registrar`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': STATIC_API_KEY, // USA STATIC_API_KEY
+          'X-API-Key': STATIC_API_KEY,
         },
         body: JSON.stringify(payload),
       });
@@ -182,28 +178,96 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const updateUserPreferences = async (
-    userId: string, 
+    userIdFromFrontend: string, // Este é o ID do frontend, pode ser "admin_id_special" ou um número como string
     preferences: { name?: string; locationPreference?: string; subscribedAlerts?: AlertType[] }
   ): Promise<boolean> => {
-    // ATENÇÃO: Esta função precisa ser implementada para chamar sua API backend
-    // para que as mudanças de preferência (e nome) sejam persistidas.
-    console.warn("updateUserPreferences chamado, mas não está implementado para chamar a API backend.");
     
-    // Lógica atual que só atualiza localmente:
-    if (user && user.id === userId) {
-      const updatedUserData: StoredUser = { 
-        ...user,
-        name: preferences.name !== undefined ? preferences.name : user.name,
-        locationPreference: preferences.locationPreference !== undefined ? preferences.locationPreference : user.locationPreference,
-        subscribedAlerts: preferences.subscribedAlerts !== undefined ? preferences.subscribedAlerts : user.subscribedAlerts,
-      };
-      setUser(updatedUserData);
-      localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(updatedUserData));
-      // Para um teste de UI, retornar true aqui pode ser suficiente,
-      // mas para persistência real, o sucesso dependeria da resposta da API.
-      return true; 
+    if (!user || user.id !== userIdFromFrontend) {
+        console.error("updateUserPreferences: Usuário não logado ou ID não corresponde.");
+        return false;
     }
-    return false;
+
+    // O admin especial não tem um ID numérico para ser atualizado no backend desta forma
+    if (userIdFromFrontend === 'admin_id_special') {
+        console.warn("updateUserPreferences: Não é possível atualizar preferências do admin especial via API /usuarios/{id}. Atualizando localmente.");
+        const localUpdate: Partial<StoredUser> = {};
+        if (preferences.name !== undefined) localUpdate.name = preferences.name;
+        if (preferences.locationPreference !== undefined) localUpdate.locationPreference = preferences.locationPreference;
+        if (preferences.subscribedAlerts !== undefined) localUpdate.subscribedAlerts = preferences.subscribedAlerts;
+        
+        const updatedAdminUserData = { ...user, ...localUpdate };
+        setUser(updatedAdminUserData);
+        localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(updatedAdminUserData));
+        return true;
+    }
+
+    const numericUserId = parseInt(userIdFromFrontend, 10);
+    if (isNaN(numericUserId)) {
+        console.error("updateUserPreferences: ID do usuário inválido para chamada API.");
+        return false;
+    }
+
+    // Monta o payload para a API. Inclui todos os campos da entidade Usuario que o backend espera.
+    // Os campos não alterados devem ser enviados com seus valores atuais para não serem zerados no backend,
+    // a menos que seu backend trate updates parciais (PATCH ou PUT que ignora nulos).
+    // Assumindo que o backend espera um objeto Usuario completo para o PUT.
+    const payloadForApi = {
+      userId: numericUserId, // Ou idUsuario, dependendo da sua entidade Usuario.java
+      nomeCompleto: preferences.name !== undefined ? preferences.name : user.name,
+      email: user.email, // Email geralmente não é alterado aqui
+      role: user.role,   // Role geralmente não é alterado aqui
+      // senha: user.password, // NÃO ENVIE SENHA AQUI A MENOS QUE SEJA UM CAMPO "CURRENT_PASSWORD" PARA VERIFICAÇÃO
+      locationPreference: preferences.locationPreference !== undefined ? preferences.locationPreference : user.locationPreference,
+      subscribedAlerts: preferences.subscribedAlerts !== undefined ? preferences.subscribedAlerts : user.subscribedAlerts,
+      // Inclua outros campos da entidade Usuario que seu backend espera, se houver
+    };
+    
+    // Remove campos que não devem ser enviados ou que são undefined
+    // (O backend pode não gostar de `password: undefined`)
+    // delete payloadForApi.password; // Se 'password' estiver no objeto user
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/usuarios/${numericUserId}`, { 
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': STATIC_API_KEY,
+        },
+        body: JSON.stringify(payloadForApi),
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Falha ao atualizar preferências na API: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorData.detail || errorMsg;
+        } catch (e) { 
+            const textError = await response.text().catch(() => "");
+            if(textError) errorMsg = textError;
+        }
+        console.error(errorMsg);
+        return false;
+      }
+
+      const updatedUserFromApi = await response.json(); 
+
+      const frontEndUser: StoredUser = {
+        id: String(updatedUserFromApi.userId || updatedUserFromApi.id || updatedUserFromApi.id_usuario || numericUserId), 
+        name: updatedUserFromApi.nomeCompleto || updatedUserFromApi.name,
+        email: updatedUserFromApi.email || user.email, 
+        role: updatedUserFromApi.role || user.role,   
+        locationPreference: updatedUserFromApi.locationPreference,
+        subscribedAlerts: updatedUserFromApi.subscribedAlerts,
+      };
+      
+      setUser(frontEndUser);
+      localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(frontEndUser));
+      return true;
+
+    } catch (error) {
+      console.error('Erro de rede ao atualizar preferências:', error);
+      return false;
+    }
   };
 
   return (
