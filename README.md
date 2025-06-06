@@ -18,6 +18,7 @@
 9.  [📡 Comunicação com Backend](#9-comunicação-com-backend)
 10. [🧑‍💻 Autores](#10-autores)
 
+### Link: https://echo-report-eight.vercel.app (O carregamento dos dados das páginas pode demorar devido o Render, por favor, tenha paciência 🙏)
 ---
 
 ## 1. 🌟 Visão Geral do Projeto
@@ -222,9 +223,12 @@ ECHO-REPORT/
 │   │   │   └── reportar/
 │   │   │       └── page.tsx    # Página pública para submeter Reportes
 │   │   ├── blog/
-│   │   │   ├── [slug]/         # Rota dinâmica para posts individuais do blog
+│   │   │   ├── comunidade-resiliente-echo/         
 │   │   │   │   └── page.tsx
-│   │   │   ├── BlogListClient.tsx # Componente cliente para listagem de blog (usado por page.tsx)
+│   │   │   ├── entendendo-riscos-ondas-calor/         
+│   │   │   │   └── page.tsx 
+│   │   │   ├── guia-preparacao-enchentes/         
+│   │   │   │   └── page.tsx
 │   │   │   └── page.tsx        # Página de listagem do Blog
 │   │   ├── layout.tsx          # Layout raiz para src/app/
 │   │   └── page.tsx            # Página Inicial (Home) da aplicação (src/app/page.tsx)
