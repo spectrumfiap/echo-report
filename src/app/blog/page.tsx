@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import AnimatedSection from './../components/AnimatedSection';
+import { TagIcon } from '@heroicons/react/24/outline'; // Ícone importado
 
 type Article = {
   id: string;
@@ -23,7 +24,7 @@ const allArticles: Article[] = [
     id: 'guia-preparacao-enchentes',
     title: 'Guia Completo: Como se Preparar para Enchentes',
     category: 'Prevenção e Segurança',
-    publicationDate: '2025-05-31',
+    publicationDate: '2025-06-07',
     authorName: 'Arthur Thomas',
     authorImageUrl: '/assets/Arthur.svg',
     heroImageUrl: '/assets/artigo-enchente.jpg',
@@ -52,7 +53,7 @@ const allArticles: Article[] = [
     authorImageUrl: '/assets/Arthur.svg',
     heroImageUrl: '/assets/artigo-comunidade.jpg',
     heroImageAlt: 'Mãos unidas sobre um mapa digital com ícones de alerta e colaboração.',
-    summary: 'Descubra como a colaboração cidadã e a tecnologia do Echo Report fortalecem a resposta a eventos climáticos.',
+    summary: 'Descubra como a colaboração cidadã e a tecnologia implementada nas funcionalidades do Echo Report fortalecem a resposta a eventos climáticos.',
     htmlContent: ``,
   },
 ];
@@ -87,12 +88,11 @@ export default function BlogHome() {
               threshold={0.1}
             >
               <div
-                className="group relative flex flex-col rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden h-full
-                           border border-gray-200 dark:border-gray-700
-                           transform hover:-translate-y-1"
+                className="group relative flex flex-col rounded-2xl transition-all duration-300 overflow-hidden h-full
+                                        border border-transparent dark:border-gray-700
+                                        transform hover:-translate-y-1"
                 style={{
                   backgroundColor: 'var(--brand-card-background)',
-                  boxShadow: 'var(--shadow-subtle)'
                 }}
               >
                 <Link href={`/blog/${article.id}`} className="block h-full">
@@ -111,16 +111,12 @@ export default function BlogHome() {
                   {/* Conteúdo do Card */}
                   <div className="p-5 flex-grow flex flex-col justify-between">
                     <div>
-                      {/* Categoria */}
-                      <span
-                        className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium mb-3"
-                        style={{
-                          backgroundColor: 'var(--brand-header-bg)',
-                          color: 'var(--brand-text-header)'
-                        }}
-                      >
-                        {article.category}
-                      </span>
+                      {/* Categoria -- ESTA SEÇÃO FOI ALTERADA */}
+                      <div className="flex items-center text-sm font-semibold mb-3" style={{ color: 'var(--brand-header-bg)' }}>
+                        <TagIcon className="w-4 h-4 mr-1.5" />
+                        <span>{article.category}</span>
+                      </div>
+
                       {/* Título do Artigo */}
                       <h2
                         className="text-2xl font-bold leading-tight mb-3 transition-colors duration-200"
@@ -148,7 +144,7 @@ export default function BlogHome() {
                           alt={article.authorName}
                           width={32}
                           height={32}
-                          className="rounded-full mr-3 border-2 border-blue-300 dark:border-blue-600"
+                          className="w-8 h-8 rounded-full mr-3 border-2 border-blue-300 dark:border-blue-600"
                         />
                       )}
                       <div>
