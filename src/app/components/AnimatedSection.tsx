@@ -1,5 +1,3 @@
-// seu-projeto/components/AnimatedSection.tsx (ou onde quer que esteja seu arquivo)
-
 "use client";
 
 import React, { ReactNode, Children, cloneElement, isValidElement } from 'react';
@@ -15,7 +13,6 @@ interface ChildProps {
 export interface AnimatedSectionProps {
   children: ReactNode;
   className?: string;
-  // CORREÇÃO AQUI: Adicionado 'fadeInDown' à lista de tipos
   animationType?: 'fadeInUp' | 'fadeIn' | 'slideInLeft' | 'slideInRight' | 'fadeInDown';
   delay?: string;
   threshold?: number;
@@ -55,9 +52,8 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = ({
       effectInitialStyles = { opacity: 0, transform: 'translateX(40px)' };
       effectInViewStyles = { opacity: 1, transform: 'translateX(0)' };
       break;
-    // NOVO CASO: Adicionar a lógica para 'fadeInDown'
     case 'fadeInDown':
-      effectInitialStyles = { opacity: 0, transform: 'translateY(-20px)' }; // Começa um pouco acima
+      effectInitialStyles = { opacity: 0, transform: 'translateY(-20px)' };
       effectInViewStyles = { opacity: 1, transform: 'translateY(0)' };
       break;
     case 'fadeInUp':

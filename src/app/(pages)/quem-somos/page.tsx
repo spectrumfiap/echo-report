@@ -1,7 +1,7 @@
 // src/app/pages/quem-somos/page.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react'; // Adicionado useState e useEffect
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import AnimatedSection from './../../components/AnimatedSection';
@@ -45,13 +45,12 @@ const MemberCard: React.FC<MemberCardProps> = ({ member }) => {
       setIsDarkMode(document.documentElement.classList.contains('dark'));
     };
 
-    checkDarkMode(); // Verifica no mount inicial
+    checkDarkMode();
 
-    // Observa mudanças na classe do <html> (para quando o tema é trocado)
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-    return () => observer.disconnect(); // Limpa o observer ao desmontar
+    return () => observer.disconnect();
   }, []);
 
   const githubIconSrc = isDarkMode ? "/assets/Github-white.png" : "/assets/Github.svg";

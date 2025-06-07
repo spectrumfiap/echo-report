@@ -91,7 +91,7 @@ export default function Header() {
                 Login
               </Link>
               <Link href="/registro" className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-md transition-colors text-base">
-                Registrar {/* << GARANTA QUE ESTEJA ASSIM, SEM CHAVES OU ESPAÇOS EXTRAS */}
+                Registrar {}
               </Link>
             </>
           )}
@@ -156,7 +156,7 @@ export default function Header() {
                 Login
               </Link>
               <Link href="/registro" className={mobileAuthButtonClassName} onClick={handleLinkClick}>
-                Registrar {/* << GARANTA QUE ESTEJA ASSIM, SEM CHAVES OU ESPAÇOS EXTRAS */}
+                Registrar {}
               </Link>
             </>
           )}

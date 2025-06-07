@@ -15,7 +15,7 @@ export const availableAlertTypes = [
 export type AlertType = typeof availableAlertTypes[number];
 
 export interface StoredUser {
-  id: string; // Mantém como string no frontend para consistência (ex: admin_id_special)
+  id: string;
   name: string;
   email: string;
   locationPreference?: string;
@@ -178,7 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const updateUserPreferences = async (
-    userIdFromFrontend: string, // Este é o ID do frontend, pode ser "admin_id_special" ou um número como string
+    userIdFromFrontend: string,
     preferences: { name?: string; locationPreference?: string; subscribedAlerts?: AlertType[] }
   ): Promise<boolean> => {
     
@@ -187,7 +187,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
     }
 
-    // O admin especial não tem um ID numérico para ser atualizado no backend desta forma
     if (userIdFromFrontend === 'admin_id_special') {
         console.warn("updateUserPreferences: Não é possível atualizar preferências do admin especial via API /usuarios/{id}. Atualizando localmente.");
         const localUpdate: Partial<StoredUser> = {};
@@ -207,24 +206,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
     }
 
-    // Monta o payload para a API. Inclui todos os campos da entidade Usuario que o backend espera.
-    // Os campos não alterados devem ser enviados com seus valores atuais para não serem zerados no backend,
-    // a menos que seu backend trate updates parciais (PATCH ou PUT que ignora nulos).
-    // Assumindo que o backend espera um objeto Usuario completo para o PUT.
     const payloadForApi = {
-      userId: numericUserId, // Ou idUsuario, dependendo da sua entidade Usuario.java
+      userId: numericUserId,
       nomeCompleto: preferences.name !== undefined ? preferences.name : user.name,
-      email: user.email, // Email geralmente não é alterado aqui
-      role: user.role,   // Role geralmente não é alterado aqui
-      // senha: user.password, // NÃO ENVIE SENHA AQUI A MENOS QUE SEJA UM CAMPO "CURRENT_PASSWORD" PARA VERIFICAÇÃO
+      email: user.email,
+      role: user.role,
       locationPreference: preferences.locationPreference !== undefined ? preferences.locationPreference : user.locationPreference,
       subscribedAlerts: preferences.subscribedAlerts !== undefined ? preferences.subscribedAlerts : user.subscribedAlerts,
-      // Inclua outros campos da entidade Usuario que seu backend espera, se houver
     };
-    
-    // Remove campos que não devem ser enviados ou que são undefined
-    // (O backend pode não gostar de `password: undefined`)
-    // delete payloadForApi.password; // Se 'password' estiver no objeto user
 
     try {
       const response = await fetch(`${API_BASE_URL}/usuarios/${numericUserId}`, { 

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import ShelterCard from '../../components/ShelterCard'; // Verifique se o caminho está correto, o log inicial não indicava erro aqui
-import AnimatedSection from '../../components/AnimatedSection'; // Verifique se o caminho está correto
+import ShelterCard from '../../components/ShelterCard';
+import AnimatedSection from '../../components/AnimatedSection';
 import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
 interface ShelterInfo {
@@ -59,8 +59,7 @@ export default function AbrigosPage() {
             } else {
                 errorMessage = `HTTP error! status: ${response.status}`;
             }
-          } catch (_e) { // Erro 1 corrigido: _e para indicar não uso intencional
-            // Falha ao parsear o corpo do erro, mas o errorMessage principal já está definido
+          } catch (_e) {
             console.warn("Não foi possível parsear o corpo da resposta de erro, usando statusText.");
           }
           throw new Error(errorMessage);
@@ -100,7 +99,7 @@ export default function AbrigosPage() {
   useEffect(() => {
     let transitionEndTimerId: NodeJS.Timeout;
     if (noticeState === 'entering') {
-      const rafId = requestAnimationFrame(() => { // requestAnimationFrame retorna um number
+      const rafId = requestAnimationFrame(() => {
         setNoticeState('visible');
       });
       return () => cancelAnimationFrame(rafId);

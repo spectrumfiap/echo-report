@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import MapDisplay from '../../components/MapDisplay'; // Ajuste o caminho conforme necessário
-import AnimatedSection from '../../components/AnimatedSection'; // Ajuste o caminho conforme necessário
+import MapDisplay from '../../components/MapDisplay';
+import AnimatedSection from '../../components/AnimatedSection';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { InformationCircleIcon } from '@heroicons/react/24/outline';
 

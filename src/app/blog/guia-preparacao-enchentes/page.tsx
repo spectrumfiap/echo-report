@@ -1,4 +1,4 @@
-'use client'; // Necessário para usar AnimatedSection
+'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
