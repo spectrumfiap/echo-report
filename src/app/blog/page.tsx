@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import AnimatedSection from './../components/AnimatedSection';
-import { TagIcon } from '@heroicons/react/24/outline'; // Ícone importado
+import { TagIcon } from '@heroicons/react/24/outline';
 
 type Article = {
   id: string;
@@ -111,7 +111,7 @@ export default function BlogHome() {
                   {/* Conteúdo do Card */}
                   <div className="p-5 flex-grow flex flex-col justify-between">
                     <div>
-                      {/* Categoria -- ESTA SEÇÃO FOI ALTERADA */}
+                      {/* Categoria */}
                       <div className="flex items-center text-sm font-semibold mb-3" style={{ color: 'var(--brand-header-bg)' }}>
                         <TagIcon className="w-4 h-4 mr-1.5" />
                         <span>{article.category}</span>
@@ -154,9 +154,6 @@ export default function BlogHome() {
                         >
                           {article.authorName}
                         </p>
-                        <time dateTime={article.publicationDate} className="text-xs">
-                          {new Date(article.publicationDate).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </time>
                       </div>
                     </div>
                   </div>
