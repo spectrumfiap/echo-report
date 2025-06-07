@@ -7,7 +7,7 @@ import AnimatedSection from '../../components/AnimatedSection';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://echoreport-api.onrender.com';
 const STATIC_API_KEY = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
 
 type RiskLevel = 'alto' | 'medio' | 'baixo';

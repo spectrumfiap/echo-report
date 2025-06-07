@@ -105,7 +105,7 @@ export default function AlertasPage() {
       setError(null);
       try {
         const apiKey = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://echoreport-api.onrender.com';
         const response = await fetch(`${apiBaseUrl}/alertas`, {
           method: 'GET',
           headers: { 'X-API-Key': apiKey }

@@ -41,7 +41,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LOGGED_IN_USER_KEY = 'echoReportLoggedInUser_v3';
 const ADMIN_EMAIL = "admin@echoreport.com";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://echoreport-api.onrender.com';
 const STATIC_API_KEY = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {

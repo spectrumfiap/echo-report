@@ -26,7 +26,7 @@ interface ReportModalFormData {
   status: ReportStatus; severity: ReportSeverity; adminNotes?: string; imageFile?: File | null;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://echoreport-api.onrender.com';
 const STATIC_API_KEY = process.env.NEXT_PUBLIC_STATIC_API_KEY || '1234';
 
 const statusOptions: ReportStatus[] = ['novo', 'verificado', 'em_atendimento', 'resolvido', 'falso_positivo'];
