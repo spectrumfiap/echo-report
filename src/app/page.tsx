@@ -1,7 +1,6 @@
-// src/app/page.tsx
 "use client";
 
-import React, { ReactNode, JSXElementConstructor } from 'react';
+import React, { ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useInView } from 'react-intersection-observer';
@@ -35,7 +34,7 @@ interface AnimatedSectionProps {
 interface ChildProps {
   className?: string;
   style?: React.CSSProperties;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const AnimatedSection: React.FC<AnimatedSectionProps> = ({
