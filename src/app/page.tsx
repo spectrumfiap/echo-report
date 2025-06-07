@@ -1,6 +1,7 @@
+// src/app/page.tsx
 "use client";
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, JSXElementConstructor } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useInView } from 'react-intersection-observer';
@@ -34,8 +35,7 @@ interface AnimatedSectionProps {
 interface ChildProps {
   className?: string;
   style?: React.CSSProperties;
-  children?: ReactNode;
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 const AnimatedSection: React.FC<AnimatedSectionProps> = ({
@@ -190,6 +190,8 @@ export default function HomePage() {
                     fill
                     className="object-cover"
                     sizes="(max-width: 1023px) 100vw, 40vw"
+                    quality={90}
+                    unoptimized={true}
                   />
                 </div>
               </div>
@@ -233,11 +235,13 @@ export default function HomePage() {
               <div className="w-full lg:w-2/5 mb-10 lg:mb-0 flex flex-col">
                 <div className="relative w-full min-h-[300px] sm:min-h-[400px] lg:h-full rounded-xl shadow-xl overflow-hidden">
                   <Image
-                    src="/assets/dn1.jpg"
+                    src="/assets/dn7.jpg"
                     alt="Checklist de segurança para eventos climáticos com ícones representando cada dica."
                     fill
                     className="object-cover"
                     sizes="(max-width: 1023px) 100vw, 40vw"
+                    quality={90}
+                    unoptimized={true}
                   />
                 </div>
               </div>
@@ -284,11 +288,13 @@ export default function HomePage() {
               <div className="w-full lg:w-2/5 mb-10 lg:mb-0 flex flex-col">
                 <div className="relative w-full min-h-[300px] sm:min-h-[400px] lg:h-full rounded-xl shadow-xl overflow-hidden">
                   <Image
-                    src="/assets/dn4.jpg"
+                    src="/assets/dn5upscaled.jpg"
                     alt="Interface de um aplicativo exibindo contatos de emergência com ícones e números de telefone."
                     fill
                     className="object-cover"
                     sizes="(max-width: 1023px) 100vw, 40vw"
+                    quality={90}
+                    unoptimized={true}
                   />
                 </div>
               </div>
@@ -355,8 +361,8 @@ export default function HomePage() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10"
           >
             {blogPostsData.map((post) => (
-              <div 
-                key={post.slug} 
+              <div
+                key={post.slug}
                 className="bg-[var(--brand-card-background)] rounded-xl shadow-[var(--shadow-subtle)] overflow-hidden flex flex-col group h-full hover:shadow-xl transform transition-all duration-300 hover:-translate-y-1.5"
               >
                 <Link href={`/blog/${post.slug}`} className="block group/card focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-header-bg)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-card-background)] rounded-t-xl">
@@ -367,6 +373,7 @@ export default function HomePage() {
                       fill
                       className="object-cover group-hover/card:scale-105 transition-transform duration-300"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      quality={90}
                     />
                   </div>
                 </Link>
@@ -375,7 +382,7 @@ export default function HomePage() {
                     <TagIcon className="w-4 h-4 mr-1.5" />
                     {post.category}
                   </span>
-                  
+
                   <h3 className="text-xl font-semibold text-[var(--brand-text-primary)] mb-3">
                     <Link href={`/blog/${post.slug}`} className="hover:text-[var(--brand-header-bg)] transition-colors focus:outline-none focus-visible:text-[var(--brand-header-bg)] focus-visible:underline">
                       {post.title}
